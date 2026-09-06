@@ -134,17 +134,37 @@ mnormt::pmnorm(x, mean = mu, varcov = Sigma)
 
 ## Superficie y contornos de una normal bivariada
 
-Usar para visualizar la densidad. Sustituir `mu` y `Sigma`.
+Usar para visualizar la densidad. Sustituir `mu` y `Sigma`. La superficie con `plotly` es interactiva: permite rotar, acercar y consultar coordenadas.
 
 ``` r
 sd1 <- sqrt(Sigma[1,1])
 sd2 <- sqrt(Sigma[2,2])
 x1 <- seq(mu[1]-4*sd1, mu[1]+4*sd1, length.out=100)
 x2 <- seq(mu[2]-4*sd2, mu[2]+4*sd2, length.out=100)
-f <- function(x1, x2) mnormt::dmnorm(cbind(x1,x2), mean=mu, varcov=Sigma)
+
+f <- function(x1, x2) {
+  mnormt::dmnorm(cbind(x1, x2), mean=mu, varcov=Sigma)
+}
+
 z <- outer(x1, x2, f)
-persp(x1, x2, z, theta=30, phi=25)
-contour(x1, x2, z)
+
+plotly::plot_ly(
+  x = x1,
+  y = x2,
+  z = t(z)
+) |>
+  plotly::add_surface() |>
+  plotly::layout(
+    scene = list(
+      xaxis = list(title = "X1"),
+      yaxis = list(title = "X2"),
+      zaxis = list(title = "Densidad")
+    )
+  )
+
+contour(x1, x2, z,
+        xlab = "X1",
+        ylab = "X2")
 ```
 
 ## Transformación lineal de una normal multivariada
