@@ -32,6 +32,18 @@ det(A)
 A %*% B
 ```
 
+Para el producto matricial:
+
+$$
+A_{m\times n}B_{n\times p}=C_{m\times p}
+$$
+
+Propiedad del determinante usada en la actividad:
+
+$$
+\det(A)=\det(A^T)
+$$
+
 ## Seleccionar variables y convertir a matriz
 
 Sustituir `x1, x2, ...` por las variables cuantitativas que se utilizarán.
@@ -46,6 +58,10 @@ n <- nrow(X)
 
 Usar cuando se pida calcular el vector de medias mediante notación matricial.
 
+$$
+\boldsymbol{\mu}=\frac{1}{n}\mathbf{1}^TX
+$$
+
 ``` r
 unos <- matrix(1, nrow = n, ncol = 1)
 mu <- (t(unos) %*% X) / n
@@ -54,7 +70,17 @@ mu
 
 ## Matriz de varianzas y covarianzas poblacional
 
+Centrar primero los datos:
+
+$$
+X_c=X-\mathbf{1}\boldsymbol{\mu}
+$$
+
 Usar `n` en el denominador cuando el ejercicio trate los datos como población.
+
+$$
+\Sigma=\frac{1}{n}X_c^TX_c
+$$
 
 ``` r
 Sigma <- t(X - unos %*% mu) %*% (X - unos %*% mu) / n
@@ -62,6 +88,18 @@ Sigma
 ```
 
 ## Matriz de correlación a partir de Sigma
+
+Si $D$ contiene las desviaciones estándar en su diagonal:
+
+$$
+D=\operatorname{diag}(\sqrt{\sigma_{11}},\sqrt{\sigma_{22}},\ldots,\sqrt{\sigma_{pp}})
+$$
+
+entonces:
+
+$$
+R=D^{-1}\Sigma D^{-1}
+$$
 
 Construirla a partir de las desviaciones estándar de la diagonal de `Sigma`.
 
@@ -74,6 +112,12 @@ R
 ```
 
 ## Valores y vectores propios
+
+Para una matriz $M$, un vector propio $\mathbf{v}$ y su valor propio $\lambda$ cumplen:
+
+$$
+M\mathbf{v}=\lambda\mathbf{v}
+$$
 
 Aplicar `eigen()` a la matriz de covarianzas o de correlación según lo que pida el problema.
 
