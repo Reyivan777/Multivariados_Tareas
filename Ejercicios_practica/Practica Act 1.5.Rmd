@@ -19,8 +19,7 @@ Resuelve esta práctica usando principalmente tu formulario `FormularioMultivari
 
 Sea
 
-$$
-X\sim N_2\left(
+$$X\sim N_2\left(
 \begin{pmatrix}
 1\\
 3
@@ -29,19 +28,25 @@ X\sim N_2\left(
 2 & 0.6\\
 0.6 & 1.5
 \end{pmatrix}
-\right).
-$$
+\right).$$
 
 ## a) Definir $\mu$, $\Sigma$ y el punto $x=(2,2.5)$ en R (5 puntos)
 
 ```{r}
 # Escribe tu código aquí
+mu <- c(1, 3)
+Sigma <- matrix(c(2, 0.6,
+                  0.6, 1.5),
+                nrow = 2, byrow = TRUE)
+x <- c(2, 2.5)
 ```
 
 ## b) Calcular $P(X_1\le 2, X_2\le 2.5)$ usando `pmnorm()` (10 puntos)
 
 ```{r}
 # Escribe tu código aquí
+mnormt::pmnorm(x, mean = mu, varcov = Sigma)
+
 ```
 
 # Problema 2 - Densidad y contornos (15 puntos)
@@ -54,6 +59,35 @@ Usa un rango aproximado de cuatro desviaciones estándar alrededor de cada media
 
 ```{r}
 # Escribe tu código aquí
+sd1 <- sqrt(Sigma[1,1])
+sd2 <- sqrt(Sigma[2,2])
+
+x1 <- seq(mu[1] - 4*sd1, mu[1] + 4*sd1, length.out = 100)
+x2 <- seq(mu[2] - 4*sd2, mu[2] + 4*sd2, length.out = 100)
+
+f <- function(x1, x2) {
+  mnormt::dmnorm(
+    cbind(x1, x2),
+    mean = mu,
+    varcov = Sigma
+  )
+}
+
+z <- outer(x1, x2, f)
+
+plotly::plot_ly(
+  x = x1,
+  y = x2,
+  z = t(z)
+) |>
+  plotly::add_surface() |>
+  plotly::layout(
+    scene = list(
+      xaxis = list(title = "X1"),
+      yaxis = list(title = "X2"),
+      zaxis = list(title = "Densidad")
+    )
+  )
 ```
 
 ## b) Construir el gráfico de contornos (5 puntos)
@@ -66,13 +100,11 @@ Usa un rango aproximado de cuatro desviaciones estándar alrededor de cada media
 
 ¿Cuál es la relación entre la superficie tridimensional y el gráfico de contornos? Escribe tu respuesta aquí:
 
-
 # Problema 3 - Transformación lineal (25 puntos)
 
 Sea
 
-$$
-X\sim N_2\left(
+$$X\sim N_2\left(
 \begin{pmatrix}
 2\\
 -1
@@ -81,19 +113,15 @@ X\sim N_2\left(
 4 & 1\\
 1 & 2
 \end{pmatrix}
-\right)
-$$
+\right)$$
 
 y define
 
-$$
-Y=AX+d,
-$$
+$$Y=AX+d,$$
 
 con
 
-$$
-A=
+$$A=
 \begin{pmatrix}
 1 & 2\\
 -1 & 3
@@ -103,8 +131,7 @@ d=
 \begin{pmatrix}
 4\\
 2
-\end{pmatrix}.
-$$
+\end{pmatrix}.$$
 
 ## a) Crear $A$, $d$, $\mu_X$ y $\Sigma_X$ en R (5 puntos)
 
@@ -128,14 +155,11 @@ $$
 
 Escribe tu respuesta aquí en notación $N_2(\mu_Y,\Sigma_Y)$:
 
-
 # Problema 4 - Combinación lineal (15 puntos)
 
 Usando la distribución de $Y$ obtenida en el Problema 3, define
 
-$$
-Z=2Y_1-3Y_2+5.
-$$
+$$Z=2Y_1-3Y_2+5.$$
 
 ## a) Definir el vector de coeficientes y la constante (3 puntos)
 
@@ -158,7 +182,6 @@ $$
 ## d) Escribir la distribución de $Z$ (2 puntos)
 
 Escribe tu respuesta aquí:
-
 
 # Problema 5 - Evaluación de normalidad multivariada (30 puntos)
 
@@ -207,10 +230,9 @@ Con $\alpha=0.05$, responde brevemente:
 
 Escribe tu respuesta aquí:
 
-
 # Entrega
 
-1. Haz Knit a HTML.
-2. Guarda el `.Rmd` y el `.html`.
-3. Súbelos al repositorio.
-4. Avísame para revisar procedimiento, código, resultados e interpretación sobre 100 puntos.
+1.  Haz Knit a HTML.
+2.  Guarda el `.Rmd` y el `.html`.
+3.  Súbelos al repositorio.
+4.  Avísame para revisar procedimiento, código, resultados e interpretación sobre 100 puntos.

@@ -34,15 +34,11 @@ A %*% B
 
 Para el producto matricial:
 
-$$
-A_{m\times n}B_{n\times p}=C_{m\times p}
-$$
+$$A_{m\times n}B_{n\times p}=C_{m\times p}$$
 
 Propiedad del determinante usada en la actividad:
 
-$$
-\det(A)=\det(A^T)
-$$
+$$\det(A)=\det(A^T)$$
 
 ## Seleccionar variables y convertir a matriz
 
@@ -58,9 +54,7 @@ n <- nrow(X)
 
 Usar cuando se pida calcular el vector de medias mediante notación matricial.
 
-$$
-\boldsymbol{\mu}=\frac{1}{n}\mathbf{1}^TX
-$$
+$$\boldsymbol{\mu}=\frac{1}{n}\mathbf{1}^TX$$
 
 ``` r
 unos <- matrix(1, nrow = n, ncol = 1)
@@ -72,15 +66,11 @@ mu
 
 Centrar primero los datos:
 
-$$
-X_c=X-\mathbf{1}\boldsymbol{\mu}
-$$
+$$X_c=X-\mathbf{1}\boldsymbol{\mu}$$
 
 Usar `n` en el denominador cuando el ejercicio trate los datos como población.
 
-$$
-\Sigma=\frac{1}{n}X_c^TX_c
-$$
+$$\Sigma=\frac{1}{n}X_c^TX_c$$
 
 ``` r
 Sigma <- t(X - unos %*% mu) %*% (X - unos %*% mu) / n
@@ -91,15 +81,11 @@ Sigma
 
 Si $D$ contiene las desviaciones estándar en su diagonal:
 
-$$
-D=\operatorname{diag}(\sqrt{\sigma_{11}},\sqrt{\sigma_{22}},\ldots,\sqrt{\sigma_{pp}})
-$$
+$$D=\operatorname{diag}(\sqrt{\sigma_{11}},\sqrt{\sigma_{22}},\ldots,\sqrt{\sigma_{pp}})$$
 
 entonces:
 
-$$
-R=D^{-1}\Sigma D^{-1}
-$$
+$$R=D^{-1}\Sigma D^{-1}$$
 
 Construirla a partir de las desviaciones estándar de la diagonal de `Sigma`.
 
@@ -115,9 +101,7 @@ R
 
 Para una matriz $M$, un vector propio $\mathbf{v}$ y su valor propio $\lambda$ cumplen:
 
-$$
-M\mathbf{v}=\lambda\mathbf{v}
-$$
+$$M\mathbf{v}=\lambda\mathbf{v}$$
 
 Aplicar `eigen()` a la matriz de covarianzas o de correlación según lo que pida el problema.
 
@@ -137,9 +121,7 @@ eigen_cor$vectors
 
 Para $X\sim N_2(\mu,\Sigma)$ y calcular $P(X_1\le x_1, X_2\le x_2)$, sustituir `mu`, `Sigma` y `x`.
 
-$$
-X\sim N_p(\boldsymbol{\mu},\Sigma)
-$$
+$$X\sim N_p(\boldsymbol{\mu},\Sigma)$$
 
 ``` r
 mu <- c(mu1, mu2)
@@ -169,15 +151,11 @@ contour(x1, x2, z)
 
 Si
 
-$$
-Y=AX+d
-$$
+$$Y=AX+d$$
 
 y $X\sim N_p(\mu_X,\Sigma_X)$, entonces:
 
-$$
-Y\sim N(A\mu_X+d,\;A\Sigma_XA^T)
-$$
+$$Y\sim N(A\mu_X+d,\;A\Sigma_XA^T)$$
 
 ``` r
 mu_y <- A %*% mu_x + d
@@ -188,19 +166,13 @@ Sigma_y <- A %*% Sigma_x %*% t(A)
 
 Para
 
-$$
-Z=aY+c
-$$
+$$Z=aY+c$$
 
 la media y varianza son:
 
-$$
-\mu_Z=a\mu_Y+c
-$$
+$$\mu_Z=a\mu_Y+c$$
 
-$$
-\operatorname{Var}(Z)=a\Sigma_Ya^T
-$$
+$$\operatorname{Var}(Z)=a\Sigma_Ya^T$$
 
 ``` r
 a <- matrix(c(a1, a2), nrow = 1)
@@ -213,9 +185,7 @@ var_z <- a %*% Sigma_y %*% t(a)
 
 Usar para evaluar gráficamente normalidad multivariada. Sustituir `M` por las variables cuantitativas.
 
-$$
-d_i^2=(x_i-\bar{x})^TS^{-1}(x_i-\bar{x})
-$$
+$$d_i^2=(x_i-\bar{x})^TS^{-1}(x_i-\bar{x})$$
 
 ``` r
 p <- ncol(M)
@@ -233,13 +203,9 @@ abline(a=0, b=1, col="red")
 
 Hipótesis:
 
-$$
-H_0:\text{ los datos siguen una distribución normal multivariada}
-$$
+$$H_0:\text{ los datos siguen una distribución normal multivariada}$$
 
-$$
-H_1:\text{ los datos no siguen una distribución normal multivariada}
-$$
+$$H_1:\text{ los datos no siguen una distribución normal multivariada}$$
 
 Con $\alpha=0.05$: si `p.value < 0.05`, rechazar $H_0$.
 
