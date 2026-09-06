@@ -244,3 +244,99 @@ shapiro.test(M[,2])
 ```
 
 Con $\alpha=0.05$: si `p.value < 0.05`, rechazar normalidad para esa variable.
+
+# 2. Combinaciones lineales y validación
+
+## Matriz de covarianzas muestral
+
+Para datos muestrales usar $n-1$:
+
+$$S=\frac{1}{n-1}X_c^TX_c$$
+
+``` r
+medias <- colMeans(X)
+Xc <- sweep(X, 2, medias, "-")
+n <- nrow(X)
+S <- t(Xc) %*% Xc / (n - 1)
+```
+
+Equivalente directo:
+
+``` r
+S <- cov(X)
+```
+
+## Combinaciones lineales
+
+Para $b^TX$ y $c^TX$:
+
+$$E(b^TX)=b^T\mu$$
+
+$$Var(b^TX)=b^TSb$$
+
+$$Var(c^TX)=c^TSc$$
+
+$$Cov(b^TX,c^TX)=b^TSc$$
+
+``` r
+bX <- X %*% b
+cX <- X %*% c
+
+t(b) %*% medias
+t(c) %*% medias
+
+t(b) %*% S %*% b
+t(c) %*% S %*% c
+t(b) %*% S %*% c
+```
+
+Si la covarianza es distinta de cero, las combinaciones no son independientes. Si provienen de una normal multivariada, covarianza cero implica independencia.
+
+## Varianza generalizada y singularidad
+
+La varianza generalizada es:
+
+$$GV=|S|$$
+
+También:
+
+$$|S|=\prod_{j=1}^{p}\lambda_j$$
+
+``` r
+det(S)
+eigen_S <- eigen(S)
+eigen_S$values
+eigen_S$vectors
+prod(eigen_S$values)
+```
+
+Si $|S|\approx0$ y aparece un valor propio cercano a cero, $S$ es singular y existe dependencia lineal entre las variables.
+
+## Prueba de Henze-Zirkler
+
+Hipótesis:
+
+$$H_0:\text{ los datos siguen una distribución normal multivariada}$$
+
+$$H_1:\text{ los datos no siguen una distribución normal multivariada}$$
+
+``` r
+resultado_hz <- MVN::mvn(data = M, mvn_test = "hz")
+resultado_hz
+```
+
+Con $\alpha=0.05$: si `p.value < 0.05`, rechazar $H_0$.
+
+## Contorno de probabilidad con Mahalanobis
+
+Para un contorno de probabilidad `prob` en $p$ dimensiones:
+
+$$d_i^2\leq\chi^2_{p,\,prob}$$
+
+``` r
+d2 <- mahalanobis(X, colMeans(X), cov(X))
+limite <- qchisq(prob, df = ncol(X))
+dentro <- d2 <= limite
+sum(dentro)
+mean(dentro)
+```
