@@ -130,3 +130,133 @@ eigen_cor <- eigen(R)
 eigen_cor$values
 eigen_cor$vectors
 ```
+
+# 1. Normal multivariada
+
+## Probabilidad acumulada bivariada
+
+Para $X\sim N_2(\mu,\Sigma)$ y calcular $P(X_1\le x_1, X_2\le x_2)$, sustituir `mu`, `Sigma` y `x`.
+
+$$
+X\sim N_p(\boldsymbol{\mu},\Sigma)
+$$
+
+``` r
+library(mnormt)
+mu <- c(mu1, mu2)
+Sigma <- matrix(c(var1, cov12,
+                  cov12, var2),
+                nrow = 2, byrow = TRUE)
+x <- c(x1, x2)
+pmnorm(x, mean = mu, varcov = Sigma)
+```
+
+## Superficie y contornos de una normal bivariada
+
+Usar para visualizar la densidad. Sustituir `mu` y `Sigma`.
+
+``` r
+sd1 <- sqrt(Sigma[1,1])
+sd2 <- sqrt(Sigma[2,2])
+x1 <- seq(mu[1]-4*sd1, mu[1]+4*sd1, length.out=100)
+x2 <- seq(mu[2]-4*sd2, mu[2]+4*sd2, length.out=100)
+f <- function(x1, x2) dmnorm(cbind(x1,x2), mean=mu, varcov=Sigma)
+z <- outer(x1, x2, f)
+persp(x1, x2, z, theta=30, phi=25)
+contour(x1, x2, z)
+```
+
+## Transformación lineal de una normal multivariada
+
+Si
+
+$$
+Y=AX+d
+$$
+
+y $X\sim N_p(\mu_X,\Sigma_X)$, entonces:
+
+$$
+Y\sim N(A\mu_X+d,\;A\Sigma_XA^T)
+$$
+
+``` r
+mu_y <- A %*% mu_x + d
+Sigma_y <- A %*% Sigma_x %*% t(A)
+```
+
+## Combinación lineal de variables normales
+
+Para
+
+$$
+Z=aY+c
+$$
+
+la media y varianza son:
+
+$$
+\mu_Z=a\mu_Y+c
+$$
+
+$$
+\operatorname{Var}(Z)=a\Sigma_Ya^T
+$$
+
+``` r
+a <- matrix(c(a1, a2), nrow = 1)
+c <- constante
+mu_z <- a %*% mu_y + c
+var_z <- a %*% Sigma_y %*% t(a)
+```
+
+## QQ-Plot con distancias de Mahalanobis
+
+Usar para evaluar gráficamente normalidad multivariada. Sustituir `M` por las variables cuantitativas.
+
+$$
+d_i^2=(x_i-\bar{x})^TS^{-1}(x_i-\bar{x})
+$$
+
+``` r
+p <- ncol(M)
+media <- colMeans(M)
+S <- cov(M)
+d2M <- mahalanobis(M, media, S)
+teoricos <- qchisq(((1:nrow(M))-0.5)/nrow(M), df=p)
+plot(teoricos, sort(d2M),
+     xlab="Cuantiles teóricos Chi-cuadrada",
+     ylab="Distancias de Mahalanobis")
+abline(a=0, b=1, col="red")
+```
+
+## Prueba de Mardia
+
+Hipótesis:
+
+$$
+H_0:\text{ los datos siguen una distribución normal multivariada}
+$$
+
+$$
+H_1:\text{ los datos no siguen una distribución normal multivariada}
+$$
+
+Con $\alpha=0.05$: si `p.value < 0.05`, rechazar $H_0$.
+
+``` r
+library(MVN)
+resultado_mardia <- mvn(data = M, mvn_test = "mardia")
+resultado_mardia
+```
+
+## Normalidad univariada
+
+Revisar cada variable con Shapiro-Wilk.
+
+``` r
+shapiro.test(M[,1])
+shapiro.test(M[,2])
+```
+
+Con $\alpha=0.05$: si `p.value < 0.05`, rechazar normalidad para esa variable.
