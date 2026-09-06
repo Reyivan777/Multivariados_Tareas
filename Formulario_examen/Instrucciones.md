@@ -33,15 +33,16 @@ En síntesis, es una guía breve para recordar y adaptar procedimientos que ya c
 Organiza el formulario mediante encabezados que permitan localizar rápidamente cada procedimiento desde el outline:
 Por ejemplo:
 
-# 0. Preparación de los datos
-# 1. Normal Multivariada
-## Calculo de probabilidades
-## Evaluación de la Normalidad
-# 2. Regresión Múltiple
-## Ajuste y pruebas de significancia
-## Diagnóstico y validación
-# 3. Análisis de componentes principales
-#... Otros  temas del curso
+- '# 0. Preparación de los datos'
+- '# 1. Normal Multivariada'
+- '## Calculo de probabilidades'
+- '## Evaluación de la Normalidad'
+- '# 2. Regresión Múltiple'
+- '## Ajuste y pruebas de significancia'
+- '## Diagnóstico y validación'
+- '# 3. Análisis de componentes principales'
+- '#... Otros  temas del curso'
+
 Antes de cada bloque de código, incluye una indicación breve sobre su propósito, cuándo utilizarlo y qué elementos deberás adaptar. Evita explicaciones extensas. Algo tan breve como esto sería suficiente:
 Para ajustar el modelo: sustituir y por la variable respuesta y x1, x2 por las variables explicativas.
 
@@ -58,13 +59,14 @@ La IA puede ayudarte a construir el formulario, pero tú eres responsable de com
 5. Librerías y paquetes.
 NO debes colocar una lista grande de librerías al inicio de tu formulario. En lugar de eso coloca la librería dentro de cada sección específica. Ejemplo:
 
-# Análisis de componentes principales
+- 1# Análisis de componentes principales1
 pca <- FactoMineR :: PCA(datos, scale.unit = TRUE, graph=FALSE)
-# Análisis factorial
+- # 'Análisis factorial'
 af <- psych :: fa(datos, nfactors = 3, rotate = "varimax")
-# Clustering
+- # 'Clustering1'
 cl <- cluster :: pam(datos, k = 3)
 Beneficio: Solo se cargan paquetes cuando los necesites, esto implica menos RAM consumida.
+
 6. Preparación de Posit Cloud
 
 Crear tu cuenta en Posit Cloud
