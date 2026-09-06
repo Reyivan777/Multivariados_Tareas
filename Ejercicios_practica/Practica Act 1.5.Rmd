@@ -94,11 +94,16 @@ plotly::plot_ly(
 
 ```{r}
 # Escribe tu código aquí
+contour(x1, x2, z,
+        xlab = "X1",
+        ylab = "X2")
 ```
 
 ## c) Interpretación breve (2 puntos)
 
 ¿Cuál es la relación entre la superficie tridimensional y el gráfico de contornos? Escribe tu respuesta aquí:
+
+El volumen bajo la superficie representa la probabilidad de que x1\<2.5 y x2\<2
 
 # Problema 3 - Transformación lineal (25 puntos)
 
@@ -137,23 +142,57 @@ d=
 
 ```{r}
 # Escribe tu código aquí
+A <- matrix(c(1, 2,
+              -1, 3),
+            nrow = 2, byrow = TRUE)
+
+d <- matrix(c(4,
+              2),
+            nrow = 2, byrow = TRUE)
+
+X <- matrix(c(4, 1,
+              1, 2),
+           nrow = 2, byrow = TRUE)
+mu_x <- c(2, -1)
+
+n <- nrow(X)
+unos <- matrix(1, nrow = n, ncol = 1)
+
+Sigma_x <- t(X - unos %*% mu) %*% (X - unos %*% mu) / n
+
 ```
 
 ## b) Calcular $\mu_Y$ usando $A\mu_X+d$ (8 puntos)
 
 ```{r}
 # Escribe tu código aquí
+mu_y <- A %*% mu_x + d
+mu_y
+
 ```
 
 ## c) Calcular $\Sigma_Y$ usando $A\Sigma_XA^T$ (8 puntos)
 
 ```{r}
 # Escribe tu código aquí
+Sigma_y <- A %*% Sigma_x %*% t(A)
+Sigma_y
 ```
 
 ## d) Escribir la distribución de $Y$ (4 puntos)
 
 Escribe tu respuesta aquí en notación $N_2(\mu_Y,\Sigma_Y)$:
+
+$$Y\sim N_2\left(
+\begin{pmatrix}
+4\\
+-3
+\end{pmatrix},
+\begin{pmatrix}
+2.5 & 7.5\\
+7.5 & 45
+\end{pmatrix}
+\right)$$
 
 # Problema 4 - Combinación lineal (15 puntos)
 
@@ -165,23 +204,33 @@ $$Z=2Y_1-3Y_2+5.$$
 
 ```{r}
 # Escribe tu código aquí
+a <- matrix(c(2, -3), nrow = 1)
+c = 5
 ```
 
 ## b) Calcular $\mu_Z$ (5 puntos)
 
 ```{r}
 # Escribe tu código aquí
+mu_z <- a %*% mu_y + c
+
 ```
 
 ## c) Calcular $Var(Z)$ (5 puntos)
 
 ```{r}
 # Escribe tu código aquí
+var_z <- a %*% Sigma_y %*% t(a)
 ```
 
 ## d) Escribir la distribución de $Z$ (2 puntos)
 
 Escribe tu respuesta aquí:
+
+$$Z\sim N_2\left(
+22,
+325
+\right)$$
 
 # Problema 5 - Evaluación de normalidad multivariada (30 puntos)
 
@@ -200,33 +249,52 @@ M
 
 ```{r}
 # Escribe tu código aquí
+variables <- c("X1", "X2")
+X <- as.matrix(M[, variables])
+n <- nrow(X)
+
+unos <- matrix(1, nrow = n, ncol = 1)
+mu <- (t(unos) %*% X) / n
 ```
 
 ## b) Calcular las distancias de Mahalanobis y construir el QQ-Plot contra cuantiles Chi-cuadrada (10 puntos)
 
 ```{r}
 # Escribe tu código aquí
+p <- ncol(M)
+media <- colMeans(M)
+S <- cov(M)
+d2M <- mahalanobis(M, media, S)
+teoricos <- qchisq(((1:nrow(M))-0.5)/nrow(M), df=p)
+plot(teoricos, sort(d2M),
+     xlab="Cuantiles teóricos Chi-cuadrada",
+     ylab="Distancias de Mahalanobis")
+abline(a=0, b=1, col="red")
 ```
 
 ## c) Aplicar la prueba de Mardia (7 puntos)
 
 ```{r}
 # Escribe tu código aquí
+resultado_mardia <- MVN::mvn(data = M, mvn_test = "mardia")
+resultado_mardia
 ```
 
 ## d) Aplicar Shapiro-Wilk por separado a X1 y X2 (4 puntos)
 
 ```{r}
 # Escribe tu código aquí
+shapiro.test(M[,1])
+shapiro.test(M[,2])
 ```
 
 ## e) Interpretación (4 puntos)
 
 Con $\alpha=0.05$, responde brevemente:
 
-- ¿Qué concluye Mardia sobre la normalidad multivariada?
-- ¿Qué concluye Shapiro-Wilk para cada variable?
-- ¿Coinciden necesariamente la normalidad univariada y la multivariada?
+- ¿Qué concluye Mardia sobre la normalidad multivariada? Mardía concluye que el sesgo no corresponde a una distribución normal multivariada con un p valor de 0.017, sin embargo concluye que la kurtosis si corresponde a una normal multivariada con un p value de 0.53
+- ¿Qué concluye Shapiro-Wilk para cada variable? Saphiro wilk concluye que ninguna de las dos variables se distribuye de manera normal ya que ambas tienen un pvalue muy pequeño
+- ¿Coinciden necesariamente la normalidad univariada y la multivariada? No coinciden por lo que la decisión final es que la distribución no es normal multivariada
 
 Escribe tu respuesta aquí:
 

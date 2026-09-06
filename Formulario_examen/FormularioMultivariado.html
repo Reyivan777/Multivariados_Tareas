@@ -1646,6 +1646,11 @@ t(A)
 solve(A)
 det(A)
 A %*% B</code></pre>
+<p>Para el producto matricial:</p>
+<p><span class="math display">\[A_{m\times n}B_{n\times p}=C_{m\times
+p}\]</span></p>
+<p>Propiedad del determinante usada en la actividad:</p>
+<p><span class="math display">\[\det(A)=\det(A^T)\]</span></p>
 </div>
 <div id="seleccionar-variables-y-convertir-a-matriz" class="section level2">
 <h2>Seleccionar variables y convertir a matriz</h2>
@@ -1659,19 +1664,28 @@ n &lt;- nrow(X)</code></pre>
 <h2>Vector de medias poblacional</h2>
 <p>Usar cuando se pida calcular el vector de medias mediante notación
 matricial.</p>
+<p><span class="math display">\[\boldsymbol{\mu}=\frac{1}{n}\mathbf{1}^TX\]</span></p>
 <pre class="r"><code>unos &lt;- matrix(1, nrow = n, ncol = 1)
 mu &lt;- (t(unos) %*% X) / n
 mu</code></pre>
 </div>
 <div id="matriz-de-varianzas-y-covarianzas-poblacional" class="section level2">
 <h2>Matriz de varianzas y covarianzas poblacional</h2>
+<p>Centrar primero los datos:</p>
+<p><span class="math display">\[X_c=X-\mathbf{1}\boldsymbol{\mu}\]</span></p>
 <p>Usar <code>n</code> en el denominador cuando el ejercicio trate los
 datos como población.</p>
+<p><span class="math display">\[\Sigma=\frac{1}{n}X_c^TX_c\]</span></p>
 <pre class="r"><code>Sigma &lt;- t(X - unos %*% mu) %*% (X - unos %*% mu) / n
 Sigma</code></pre>
 </div>
 <div id="matriz-de-correlación-a-partir-de-sigma" class="section level2">
 <h2>Matriz de correlación a partir de Sigma</h2>
+<p>Si <span class="math inline">\(D\)</span> contiene las desviaciones
+estándar en su diagonal:</p>
+<p><span class="math display">\[D=\operatorname{diag}(\sqrt{\sigma_{11}},\sqrt{\sigma_{22}},\ldots,\sqrt{\sigma_{pp}})\]</span></p>
+<p>entonces:</p>
+<p><span class="math display">\[R=D^{-1}\Sigma D^{-1}\]</span></p>
 <p>Construirla a partir de las desviaciones estándar de la diagonal de
 <code>Sigma</code>.</p>
 <pre class="r"><code>varianzas &lt;- diag(Sigma)
@@ -1682,6 +1696,10 @@ R</code></pre>
 </div>
 <div id="valores-y-vectores-propios" class="section level2">
 <h2>Valores y vectores propios</h2>
+<p>Para una matriz <span class="math inline">\(M\)</span>, un vector
+propio <span class="math inline">\(\mathbf{v}\)</span> y su valor propio
+<span class="math inline">\(\lambda\)</span> cumplen:</p>
+<p><span class="math display">\[M\mathbf{v}=\lambda\mathbf{v}\]</span></p>
 <p>Aplicar <code>eigen()</code> a la matriz de covarianzas o de
 correlación según lo que pida el problema.</p>
 <pre class="r"><code>eigen_cov &lt;- eigen(Sigma)
@@ -1691,6 +1709,116 @@ eigen_cov$vectors
 eigen_cor &lt;- eigen(R)
 eigen_cor$values
 eigen_cor$vectors</code></pre>
+</div>
+</div>
+<div id="normal-multivariada" class="section level1">
+<h1>1. Normal multivariada</h1>
+<div id="probabilidad-acumulada-bivariada" class="section level2">
+<h2>Probabilidad acumulada bivariada</h2>
+<p>Para <span class="math inline">\(X\sim N_2(\mu,\Sigma)\)</span> y
+calcular <span class="math inline">\(P(X_1\le x_1, X_2\le x_2)\)</span>,
+sustituir <code>mu</code>, <code>Sigma</code> y <code>x</code>.</p>
+<p><span class="math display">\[X\sim
+N_p(\boldsymbol{\mu},\Sigma)\]</span></p>
+<pre class="r"><code>mu &lt;- c(mu1, mu2)
+Sigma &lt;- matrix(c(var1, cov12,
+                  cov12, var2),
+                nrow = 2, byrow = TRUE)
+x &lt;- c(x1, x2)
+mnormt::pmnorm(x, mean = mu, varcov = Sigma)</code></pre>
+</div>
+<div id="superficie-y-contornos-de-una-normal-bivariada" class="section level2">
+<h2>Superficie y contornos de una normal bivariada</h2>
+<p>Usar para visualizar la densidad. Sustituir <code>mu</code> y
+<code>Sigma</code>. La superficie con <code>plotly</code> es
+interactiva: permite rotar, acercar y consultar coordenadas.</p>
+<pre class="r"><code>sd1 &lt;- sqrt(Sigma[1,1])
+sd2 &lt;- sqrt(Sigma[2,2])
+x1 &lt;- seq(mu[1]-4*sd1, mu[1]+4*sd1, length.out=100)
+x2 &lt;- seq(mu[2]-4*sd2, mu[2]+4*sd2, length.out=100)
+
+f &lt;- function(x1, x2) {
+  mnormt::dmnorm(cbind(x1, x2), mean=mu, varcov=Sigma)
+}
+
+z &lt;- outer(x1, x2, f)
+
+plotly::plot_ly(
+  x = x1,
+  y = x2,
+  z = t(z)
+) |&gt;
+  plotly::add_surface() |&gt;
+  plotly::layout(
+    scene = list(
+      xaxis = list(title = &quot;X1&quot;),
+      yaxis = list(title = &quot;X2&quot;),
+      zaxis = list(title = &quot;Densidad&quot;)
+    )
+  )
+
+contour(x1, x2, z,
+        xlab = &quot;X1&quot;,
+        ylab = &quot;X2&quot;)</code></pre>
+</div>
+<div id="transformación-lineal-de-una-normal-multivariada" class="section level2">
+<h2>Transformación lineal de una normal multivariada</h2>
+<p>Si</p>
+<p><span class="math display">\[Y=AX+d\]</span></p>
+<p>y <span class="math inline">\(X\sim N_p(\mu_X,\Sigma_X)\)</span>,
+entonces:</p>
+<p><span class="math display">\[Y\sim
+N(A\mu_X+d,\;A\Sigma_XA^T)\]</span></p>
+<pre class="r"><code>mu_y &lt;- A %*% mu_x + d
+Sigma_y &lt;- A %*% Sigma_x %*% t(A)</code></pre>
+</div>
+<div id="combinación-lineal-de-variables-normales" class="section level2">
+<h2>Combinación lineal de variables normales</h2>
+<p>Para</p>
+<p><span class="math display">\[Z=aY+c\]</span></p>
+<p>la media y varianza son:</p>
+<p><span class="math display">\[\mu_Z=a\mu_Y+c\]</span></p>
+<p><span class="math display">\[\operatorname{Var}(Z)=a\Sigma_Ya^T\]</span></p>
+<pre class="r"><code>a &lt;- matrix(c(a1, a2), nrow = 1)
+c &lt;- constante
+mu_z &lt;- a %*% mu_y + c
+var_z &lt;- a %*% Sigma_y %*% t(a)</code></pre>
+</div>
+<div id="qq-plot-con-distancias-de-mahalanobis" class="section level2">
+<h2>QQ-Plot con distancias de Mahalanobis</h2>
+<p>Usar para evaluar gráficamente normalidad multivariada. Sustituir
+<code>M</code> por las variables cuantitativas.</p>
+<p><span class="math display">\[d_i^2=(x_i-\bar{x})^TS^{-1}(x_i-\bar{x})\]</span></p>
+<pre class="r"><code>p &lt;- ncol(M)
+media &lt;- colMeans(M)
+S &lt;- cov(M)
+d2M &lt;- mahalanobis(M, media, S)
+teoricos &lt;- qchisq(((1:nrow(M))-0.5)/nrow(M), df=p)
+plot(teoricos, sort(d2M),
+     xlab=&quot;Cuantiles teóricos Chi-cuadrada&quot;,
+     ylab=&quot;Distancias de Mahalanobis&quot;)
+abline(a=0, b=1, col=&quot;red&quot;)</code></pre>
+</div>
+<div id="prueba-de-mardia" class="section level2">
+<h2>Prueba de Mardia</h2>
+<p>Hipótesis:</p>
+<p><span class="math display">\[H_0:\text{ los datos siguen una
+distribución normal multivariada}\]</span></p>
+<p><span class="math display">\[H_1:\text{ los datos no siguen una
+distribución normal multivariada}\]</span></p>
+<p>Con <span class="math inline">\(\alpha=0.05\)</span>: si
+<code>p.value &lt; 0.05</code>, rechazar <span class="math inline">\(H_0\)</span>.</p>
+<pre class="r"><code>resultado_mardia &lt;- MVN::mvn(data = M, mvn_test = &quot;mardia&quot;)
+resultado_mardia</code></pre>
+</div>
+<div id="normalidad-univariada" class="section level2">
+<h2>Normalidad univariada</h2>
+<p>Revisar cada variable con Shapiro-Wilk.</p>
+<pre class="r"><code>shapiro.test(M[,1])
+shapiro.test(M[,2])</code></pre>
+<p>Con <span class="math inline">\(\alpha=0.05\)</span>: si
+<code>p.value &lt; 0.05</code>, rechazar normalidad para esa
+variable.</p>
 </div>
 </div>
 
