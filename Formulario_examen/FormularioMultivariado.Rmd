@@ -142,13 +142,12 @@ X\sim N_p(\boldsymbol{\mu},\Sigma)
 $$
 
 ``` r
-library(mnormt)
 mu <- c(mu1, mu2)
 Sigma <- matrix(c(var1, cov12,
                   cov12, var2),
                 nrow = 2, byrow = TRUE)
 x <- c(x1, x2)
-pmnorm(x, mean = mu, varcov = Sigma)
+mnormt::pmnorm(x, mean = mu, varcov = Sigma)
 ```
 
 ## Superficie y contornos de una normal bivariada
@@ -160,7 +159,7 @@ sd1 <- sqrt(Sigma[1,1])
 sd2 <- sqrt(Sigma[2,2])
 x1 <- seq(mu[1]-4*sd1, mu[1]+4*sd1, length.out=100)
 x2 <- seq(mu[2]-4*sd2, mu[2]+4*sd2, length.out=100)
-f <- function(x1, x2) dmnorm(cbind(x1,x2), mean=mu, varcov=Sigma)
+f <- function(x1, x2) mnormt::dmnorm(cbind(x1,x2), mean=mu, varcov=Sigma)
 z <- outer(x1, x2, f)
 persp(x1, x2, z, theta=30, phi=25)
 contour(x1, x2, z)
@@ -245,8 +244,7 @@ $$
 Con $\alpha=0.05$: si `p.value < 0.05`, rechazar $H_0$.
 
 ``` r
-library(MVN)
-resultado_mardia <- mvn(data = M, mvn_test = "mardia")
+resultado_mardia <- MVN::mvn(data = M, mvn_test = "mardia")
 resultado_mardia
 ```
 
