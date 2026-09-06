@@ -59,11 +59,11 @@ La IA puede ayudarte a construir el formulario, pero tú eres responsable de com
 5. Librerías y paquetes.
 NO debes colocar una lista grande de librerías al inicio de tu formulario. En lugar de eso coloca la librería dentro de cada sección específica. Ejemplo:
 
-- 1# Análisis de componentes principales1
+- '# Análisis de componentes principales'
 pca <- FactoMineR :: PCA(datos, scale.unit = TRUE, graph=FALSE)
-- # 'Análisis factorial'
+- '# Análisis factorial'
 af <- psych :: fa(datos, nfactors = 3, rotate = "varimax")
-- # 'Clustering1'
+- '# Clustering1'
 cl <- cluster :: pam(datos, k = 3)
 Beneficio: Solo se cargan paquetes cuando los necesites, esto implica menos RAM consumida.
 
