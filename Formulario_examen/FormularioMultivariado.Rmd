@@ -1,0 +1,86 @@
+---
+title: "Formulario Multivariado"
+author: "Rey Iván De La Fuente Chávez"
+output: pdf_document
+---
+
+# 0. Matrices y estadística
+
+## Crear matrices
+
+Crear una matriz por filas. Sustituir los valores y `nrow` según el problema.
+
+```r
+A <- matrix(c(a11, a12, a13,
+              a21, a22, a23,
+              a31, a32, a33),
+            nrow = 3, byrow = TRUE)
+```
+
+## Operaciones básicas con matrices
+
+Usar con matrices de dimensiones compatibles.
+
+```r
+A + B
+4*A + 3*B
+t(A)
+solve(A)
+det(A)
+A %*% B
+```
+
+## Seleccionar variables y convertir a matriz
+
+Sustituir `x1, x2, ...` por las variables cuantitativas que se utilizarán.
+
+```r
+variables <- c("x1", "x2", "x3", "x4")
+X <- as.matrix(datos[, variables])
+n <- nrow(X)
+```
+
+## Vector de medias poblacional
+
+Usar cuando se pida calcular el vector de medias mediante notación matricial.
+
+```r
+unos <- matrix(1, nrow = n, ncol = 1)
+mu <- (t(unos) %*% X) / n
+mu
+```
+
+## Matriz de varianzas y covarianzas poblacional
+
+Usar `n` en el denominador cuando el ejercicio trate los datos como población.
+
+```r
+Sigma <- t(X - unos %*% mu) %*% (X - unos %*% mu) / n
+Sigma
+```
+
+## Matriz de correlación a partir de Sigma
+
+Construirla a partir de las desviaciones estándar de la diagonal de `Sigma`.
+
+```r
+varianzas <- diag(Sigma)
+desviaciones <- sqrt(varianzas)
+D_inv <- diag(1 / desviaciones)
+R <- D_inv %*% Sigma %*% D_inv
+R
+```
+
+## Valores y vectores propios
+
+Aplicar `eigen()` a la matriz de covarianzas o de correlación según lo que pida el problema.
+
+```r
+eigen_cov <- eigen(Sigma)
+eigen_cov$values
+eigen_cov$vectors
+
+eigen_cor <- eigen(R)
+eigen_cor$values
+eigen_cor$vectors
+```
