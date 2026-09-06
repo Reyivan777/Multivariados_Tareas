@@ -1,0 +1,7 @@
+project:
+  type: default
+  output-dir: html_files
+  render:
+    - "Codigos/*.qmd"
+
+format: html
