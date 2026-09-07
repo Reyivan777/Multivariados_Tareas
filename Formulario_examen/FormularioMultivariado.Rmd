@@ -295,11 +295,11 @@ prod(eigen_S$values)
 
 Si $|S|\approx0$ y un valor propio es cercano a 0, existe una dirección con varianza casi nula y puede haber dependencia lineal.
 
-# 3. Componentes principales (ACP)
+# 3. Componentes principales (PCA)
 
 ## Idea y elección de matriz
 
-ACP reemplaza variables correlacionadas por componentes no correlacionadas, ordenadas de mayor a menor varianza.
+PCA reemplaza variables correlacionadas por componentes no correlacionadas, ordenadas de mayor a menor varianza.
 
 - **Covarianzas (`S`)**: usar si las variables tienen unidades y escalas comparables.
 - **Correlaciones (`R`)**: usar si las escalas son muy distintas; equivale a estandarizar.

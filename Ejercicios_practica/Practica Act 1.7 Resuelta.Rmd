@@ -112,6 +112,7 @@ tabla_R <- data.frame(
 )
 
 tabla_R
+eig_R$values
 round(V_R[,1:2], 4)
 ```
 
@@ -145,7 +146,7 @@ X_est <- scale(X)
 scores_R <- X_est %*% V_R
 
 rownames(scores_R) <- datos$Pais
-head(round(scores_R[,1:2], 3))
+head(round(scores_R[,1:2], 3)) # Solo muestra los primeros 2 PCA
 ```
 
 Graficamos las dos primeras componentes:
