@@ -1,5 +1,5 @@
 ---
-title: "Actividad 1.11A Time Series"
+title: "Actividad 1.11A Series de tiempo"
 author: "Rey Iván De La Fuente Chávez"
 date: "2026-09-07"
 output: html_document
@@ -9,7 +9,7 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-## 1. Sales data
+## 1. Datos de ventas
 
 Se tienen ventas trimestrales de televisores durante cuatro años, expresadas en miles.
 
@@ -25,34 +25,34 @@ ventas_ts <- ts(ventas, start = c(1, 1), frequency = 4)
 ventas_ts
 ```
 
-## 2. Trend and seasonality
+## 2. Tendencia y estacionalidad
 
-### Time series
+### Serie de tiempo
 
 ```{r}
 plot(ventas_ts,
      type = "o",
-     xlab = "Year",
-     ylab = "Sales (thousands)",
-     main = "Quarterly television sales")
+     xlab = "Año",
+     ylab = "Ventas (miles)",
+     main = "Ventas trimestrales de televisores")
 ```
 
-La serie no es stationary, ya que presenta una trend general creciente y un seasonal pattern trimestral repetitivo. En particular, el segundo trimestre suele presentar las ventas más bajas y el cuarto las más altas.
+La serie no es estacionaria, ya que presenta una tendencia general creciente y un patrón estacional trimestral repetitivo. En particular, el segundo trimestre suele presentar las ventas más bajas y el cuarto las más altas.
 
-### Autocorrelation (ACF)
+### Autocorrelación (ACF)
 
 ```{r}
 acf(as.numeric(ventas_ts),
     lag.max = 12,
-    xlab = "Lag (quarters)",
-    main = "Autocorrelation of sales")
+    xlab = "Rezago (trimestres)",
+    main = "Autocorrelación de las ventas")
 ```
 
-La ACF muestra un valor importante en lag 4, consistente con quarterly seasonality: observaciones del mismo trimestre en años consecutivos tienden a comportarse de manera semejante.
+La ACF muestra un valor importante en el rezago 4, consistente con una estacionalidad trimestral: observaciones del mismo trimestre en años consecutivos tienden a comportarse de manera semejante.
 
-### Additive and multiplicative models
+### Modelos aditivo y multiplicativo
 
-Se prueban las dos formas de decomposition para comparar cuál representa mejor la serie.
+Se prueban las dos formas de descomposición para comparar cuál representa mejor la serie.
 
 ```{r}
 descomp_add <- decompose(ventas_ts, type = "additive")
@@ -62,9 +62,9 @@ plot(descomp_add)
 plot(descomp_mult)
 ```
 
-Ambas decompositions representan el seasonal pattern. La elección final entre una estructura additive o multiplicative se realiza comparando los forecast errors de los modelos ajustados.
+Ambas descomposiciones representan el patrón estacional. La elección final entre una estructura aditiva o multiplicativa se realiza comparando los errores de pronóstico de los modelos ajustados.
 
-## 3. Seasonal indices and deseasonalized series
+## 3. Índices estacionales y serie desestacionalizada
 
 ```{r}
 indice_add <- tapply(descomp_add$seasonal,
@@ -78,15 +78,15 @@ indice_mult <- tapply(descomp_mult$seasonal,
                       na.rm = TRUE)
 
 indices <- data.frame(
-  Quarter = 1:4,
-  Additive = as.numeric(indice_add),
-  Multiplicative = as.numeric(indice_mult)
+  Trimestre = 1:4,
+  Aditivo = as.numeric(indice_add),
+  Multiplicativo = as.numeric(indice_mult)
 )
 
 round(indices, 4)
 ```
 
-Los seasonal indices confirman el patrón observado. En el multiplicative model, Quarter 1 se encuentra aproximadamente 6.9% por debajo de la trend y Quarter 2 cerca de 16.4% por debajo. En cambio, Quarter 3 y Quarter 4 se encuentran aproximadamente 9.2% y 14.1% por encima, respectivamente.
+Los índices estacionales confirman el patrón observado. En el modelo multiplicativo, el trimestre 1 se encuentra aproximadamente 6.9% por debajo de la tendencia y el trimestre 2 cerca de 16.4% por debajo. En cambio, los trimestres 3 y 4 se encuentran aproximadamente 9.2% y 14.1% por encima, respectivamente.
 
 ```{r}
 estacional_add <- indice_add[cycle(ventas_ts)]
@@ -97,22 +97,22 @@ ventas_des_mult <- ventas_ts / estacional_mult
 
 plot(ventas_des_add,
      type = "o",
-     xlab = "Year",
-     ylab = "Deseasonalized sales",
-     main = "Deseasonalized series - additive model")
+     xlab = "Año",
+     ylab = "Ventas desestacionalizadas",
+     main = "Serie desestacionalizada - modelo aditivo")
 
 plot(ventas_des_mult,
      type = "o",
-     xlab = "Year",
-     ylab = "Deseasonalized sales",
-     main = "Deseasonalized series - multiplicative model")
+     xlab = "Año",
+     ylab = "Ventas desestacionalizadas",
+     main = "Serie desestacionalizada - modelo multiplicativo")
 ```
 
-Al eliminar el seasonal effect, en ambas deseasonalized series se observa con mayor claridad la creciente trend de las ventas.
+Al eliminar el efecto estacional, en ambas series desestacionalizadas se observa con mayor claridad la tendencia creciente de las ventas.
 
-## 4. Linear trend model
+## 4. Modelo lineal de tendencia
 
-Se ajustan linear models sobre las deseasonalized sales. El multiplicative model se analiza con mayor detalle y después se compara con los demás mediante sus forecast errors.
+Se ajustan modelos lineales sobre las ventas desestacionalizadas. El modelo multiplicativo se analiza con mayor detalle y después se compara con los demás mediante sus errores de pronóstico.
 
 ```{r}
 modelo_lineal_add <- lm(as.numeric(ventas_des_add) ~ tiempo)
@@ -121,13 +121,13 @@ modelo_lineal_mult <- lm(as.numeric(ventas_des_mult) ~ tiempo)
 summary(modelo_lineal_mult)
 ```
 
-Para el multiplicative model, la estimated trend es aproximadamente:
+Para el modelo multiplicativo, la tendencia estimada es aproximadamente:
 
 $$\hat{y}=5.1080+0.1474t$$
 
-El coefficient de time es significant ($p=4.25\times10^{-9}$), por lo que existe evidencia de una increasing trend. El model también es globally significant ($p=4.25\times10^{-9}$) y explica aproximadamente 92.1% de la variability de las deseasonalized sales ($R^2=0.9208$).
+El coeficiente de tiempo es significativo ($p=4.25\times10^{-9}$), por lo que existe evidencia de una tendencia creciente. El modelo también es globalmente significativo ($p=4.25\times10^{-9}$) y explica aproximadamente 92.1% de la variabilidad de las ventas desestacionalizadas ($R^2=0.9208$).
 
-### Residual analysis
+### Análisis de residuos
 
 ```{r}
 par(mfrow = c(2, 2))
@@ -136,14 +136,14 @@ par(mfrow = c(1, 1))
 
 shapiro.test(residuals(modelo_lineal_mult))
 acf(residuals(modelo_lineal_mult),
-    main = "Autocorrelation of residuals")
+    main = "Autocorrelación de los residuos")
 ```
 
-Los residuals no muestran un patrón fuerte de curvature o un cambio claro de variability. La observation 2 destaca respecto a las demás y conviene tenerla presente como una potentially influential observation. La Shapiro-Wilk test obtiene $p=0.7307$, por lo que no se rechaza normality. Además, la residual ACF no presenta lags claramente significant, por lo que no se observa evidencia fuerte de remaining temporal dependence.
+Los residuos no muestran un patrón fuerte de curvatura o un cambio claro de variabilidad. La observación 2 destaca respecto a las demás y conviene tenerla presente como una observación potencialmente influyente. La prueba de Shapiro-Wilk obtiene $p=0.7307$, por lo que no se rechaza la normalidad. Además, la ACF de los residuos no presenta rezagos claramente significativos, por lo que no se observa evidencia fuerte de dependencia temporal restante.
 
-## 5. Quadratic model
+## 5. Modelo cuadrático
 
-Se agrega el quadratic term del tiempo para explorar una nonlinear trend.
+Se agrega el término cuadrático del tiempo para explorar una tendencia no lineal.
 
 ```{r}
 tiempo2 <- tiempo^2
@@ -152,15 +152,15 @@ modelo_cuad_mult <- lm(as.numeric(ventas_des_mult) ~ tiempo + tiempo2)
 summary(modelo_cuad_mult)
 ```
 
-El estimated quadratic model es aproximadamente:
+El modelo cuadrático estimado es aproximadamente:
 
 $$\hat{y}=4.7903+0.2533t-0.00623t^2$$
 
-Tanto el linear term ($p=3.56\times10^{-5}$) como el quadratic term ($p=0.0204$) son significant. El model es globally significant y alcanza un $R^2=0.9484$. El negative coefficient de $t^2$ indica que las ventas siguen aumentando, pero el growth rate se va reduciendo con el tiempo.
+Tanto el término lineal ($p=3.56\times10^{-5}$) como el término cuadrático ($p=0.0204$) son significativos. El modelo es globalmente significativo y alcanza un $R^2=0.9484$. El coeficiente negativo de $t^2$ indica que las ventas siguen aumentando, pero el ritmo de crecimiento se va reduciendo con el tiempo.
 
-## 6. MSE and MAPE
+## 6. MSE y MAPE
 
-Se comparan tres models: additive linear, multiplicative linear y multiplicative quadratic.
+Se comparan tres modelos: aditivo lineal, multiplicativo lineal y multiplicativo cuadrático.
 
 ```{r}
 pred_add_lin <- fitted(modelo_lineal_add) + estacional_add
@@ -175,27 +175,27 @@ metricas <- function(real, pred) {
 }
 
 comparacion <- rbind(
-  "Additive linear" = metricas(ventas, pred_add_lin),
-  "Multiplicative linear" = metricas(ventas, pred_mult_lin),
-  "Multiplicative quadratic" = metricas(ventas, pred_mult_cuad)
+  "Aditivo lineal" = metricas(ventas, pred_add_lin),
+  "Multiplicativo lineal" = metricas(ventas, pred_mult_lin),
+  "Multiplicativo cuadrático" = metricas(ventas, pred_mult_cuad)
 )
 
 round(comparacion, 4)
 ```
 
-El multiplicative quadratic model presenta los menores forecast errors, con un Mean Squared Error (MSE) de 0.0219 y un Mean Absolute Percentage Error (MAPE) de 1.9493%. Por lo tanto, es el mejor de los tres models evaluados. Los dos linear models presentan resultados muy similares entre sí, pero ambos tienen mayores errors.
+El modelo multiplicativo cuadrático presenta los menores errores, con un Mean Squared Error (MSE) de 0.0219 y un Mean Absolute Percentage Error (MAPE) de 1.9493%. Por lo tanto, es el mejor de los tres modelos evaluados. Los dos modelos lineales presentan resultados muy similares entre sí, pero ambos tienen errores mayores.
 
 ```{r}
 mejor_MSE <- rownames(comparacion)[which.min(comparacion[, "MSE"])]
 mejor_MAPE <- rownames(comparacion)[which.min(comparacion[, "MAPE"])]
 
-cat("Lowest MSE:", mejor_MSE, "\n")
-cat("Lowest MAPE:", mejor_MAPE, "\n")
+cat("Menor MSE:", mejor_MSE, "\n")
+cat("Menor MAPE:", mejor_MAPE, "\n")
 ```
 
-## 7. Forecast for the next year
+## 7. Pronóstico del siguiente año
 
-Se calculan los forecasts de los cuatro quarters del Year 5 para los tres models analizados.
+Se calculan los pronósticos de los cuatro trimestres del año 5 para los tres modelos analizados.
 
 ```{r}
 futuro <- data.frame(
@@ -211,19 +211,19 @@ pron_mult_lin <- predict(modelo_lineal_mult, newdata = futuro) * est_mult_fut
 pron_mult_cuad <- predict(modelo_cuad_mult, newdata = futuro) * est_mult_fut
 
 pronosticos <- data.frame(
-  Year = rep(5, 4),
-  Quarter = 1:4,
-  Additive_linear = pron_add_lin,
-  Multiplicative_linear = pron_mult_lin,
-  Multiplicative_quadratic = pron_mult_cuad
+  Año = rep(5, 4),
+  Trimestre = 1:4,
+  Aditivo_lineal = pron_add_lin,
+  Multiplicativo_lineal = pron_mult_lin,
+  Multiplicativo_cuadratico = pron_mult_cuad
 )
 
 round(pronosticos, 3)
 ```
 
-Con el selected model, los forecasts para Year 5 son 6.790, 6.131, 8.027 y 8.406 miles de televisores para Quarter 1 a Quarter 4, respectivamente. Se conserva el seasonal pattern, con menores ventas en Quarter 2 y mayores ventas en Quarter 4.
+Con el modelo seleccionado, los pronósticos para el año 5 son 6.790, 6.131, 8.027 y 8.406 miles de televisores para los trimestres 1 a 4, respectivamente. Se conserva el patrón estacional, con menores ventas en el trimestre 2 y mayores ventas en el trimestre 4.
 
-### Final plot
+### Gráfica final
 
 ```{r}
 tiempo_total <- 1:20
@@ -237,9 +237,9 @@ plot(tiempo_total, ventas_total,
      type = "o",
      pch = 16,
      col = "black",
-     xlab = "Quarter",
-     ylab = "Sales (thousands)",
-     main = "Original data and forecasts",
+     xlab = "Trimestre",
+     ylab = "Ventas (miles)",
+     main = "Datos originales y pronósticos",
      ylim = range(c(ventas, serie_add_lin,
                     serie_mult_lin, serie_mult_cuad)))
 
@@ -252,10 +252,10 @@ lines(tiempo_total, serie_mult_cuad,
 abline(v = 16.5, lty = 2, col = "gray40")
 
 legend("topleft",
-       legend = c("Original data",
-                  "Additive linear",
-                  "Multiplicative linear",
-                  "Multiplicative quadratic"),
+       legend = c("Datos originales",
+                  "Aditivo lineal",
+                  "Multiplicativo lineal",
+                  "Multiplicativo cuadrático"),
        col = c("black", "steelblue", "darkorange", "firebrick"),
        lty = c(1, 2, 3, 1),
        lwd = c(1, 2, 2, 2),
@@ -263,11 +263,11 @@ legend("topleft",
        bty = "n")
 ```
 
-La gráfica permite comparar los historical fits y los forecasts. Los tres models reproducen el quarterly seasonal pattern, pero el multiplicative quadratic model se ajusta mejor de acuerdo con MSE y MAPE y proyecta una desaceleración del growth para Year 5.
+La gráfica permite comparar los ajustes históricos y los pronósticos. Los tres modelos reproducen el patrón estacional trimestral, pero el modelo multiplicativo cuadrático se ajusta mejor de acuerdo con MSE y MAPE y proyecta una desaceleración del crecimiento para el año 5.
 
-## Conclusion
+## Conclusión
 
-La sales time series no es stationary porque presenta una increasing trend y quarterly seasonality. Después de obtener las deseasonalized series se ajustaron tres models. El multiplicative quadratic model fue el mejor, con MSE = 0.0219 y MAPE = 1.9493%, y sus terms resultaron statistically significant. Por ello se utiliza para forecast Year 5, manteniendo el seasonal pattern de menores ventas en Quarter 2 y mayores ventas en Quarter 4.
+La serie de ventas no es estacionaria porque presenta una tendencia creciente y estacionalidad trimestral. Después de obtener las series desestacionalizadas se ajustaron tres modelos. El modelo multiplicativo cuadrático fue el mejor, con MSE = 0.0219 y MAPE = 1.9493%, y sus términos resultaron estadísticamente significativos. Por ello se utiliza para pronosticar el año 5, manteniendo el patrón estacional de menores ventas en el trimestre 2 y mayores ventas en el trimestre 4.
 
 ## Declaratoria de uso de IA
 
@@ -275,10 +275,10 @@ La sales time series no es stationary porque presenta una increasing trend y qua
 
 Herramienta: ChatGPT.
 
-Uso realizado: apoyo para estructurar el procedure, escribir y revisar el R code y organizar el time series analysis.
+Uso realizado: apoyo para estructurar el procedimiento, escribir y revisar el código en R y organizar el análisis de series de tiempo.
 
-Secciones donde se utilizó: desarrollo del code, model comparison y redacción de interpretations.
+Secciones donde se utilizó: desarrollo del código, comparación de modelos y redacción de interpretaciones.
 
-Validación realizada por el estudiante: el code fue ejecutado y rendered en RStudio; los outputs obtenidos se utilizaron para completar las interpretations.
+Validación realizada por el estudiante: el código fue ejecutado y renderizado en RStudio; las salidas obtenidas se utilizaron para completar las interpretaciones.
 
 Responsabilidad: el estudiante revisará, verificará y asumirá la responsabilidad del contenido final entregado.
