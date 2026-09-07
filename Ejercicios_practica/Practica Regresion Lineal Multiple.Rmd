@@ -1,0 +1,257 @@
+---
+title: "Práctica - Regresión lineal múltiple"
+author: "Rey Iván De La Fuente Chávez"
+output: html_document
+---
+
+# Objetivo
+
+Practicar el flujo completo de regresión lineal múltiple: exploración, ajuste, interpretación, selección de variables, intervalos, validación de supuestos y detección de observaciones influyentes.
+
+Se utilizará la base `mtcars`, incluida en R. La variable respuesta será `mpg` (rendimiento de combustible) y se considerarán como predictores iniciales:
+
+- `wt`: peso del automóvil.
+- `hp`: potencia.
+- `disp`: desplazamiento del motor.
+
+> Intenta resolver cada inciso usando primero tu formulario. No avances a conclusiones sin interpretar las salidas de R.
+
+# 0. Preparación
+
+```{r}
+rm(list = ls())
+
+data(mtcars)
+
+datos <- mtcars[, c("mpg", "wt", "hp", "disp")]
+
+head(datos)
+str(datos)
+summary(datos)
+```
+
+# 1. Exploración de los datos
+
+## 1.1 Diagramas de dispersión
+
+Construye una matriz de diagramas de dispersión entre las cuatro variables.
+
+```{r}
+# Tu código
+```
+
+**Pregunta:** ¿Qué predictor parece tener la relación lineal más fuerte con `mpg`? Indica también el signo de la relación.
+
+## 1.2 Matriz de correlaciones
+
+Calcula la matriz de correlaciones.
+
+```{r}
+# Tu código
+```
+
+**Preguntas:**
+
+1. ¿Cuál predictor tiene la mayor correlación en valor absoluto con `mpg`?
+2. ¿Existe correlación fuerte entre algunos predictores? ¿Por qué podría ser importante para la regresión?
+
+# 2. Modelo de regresión múltiple
+
+Ajusta el modelo:
+
+\[
+mpg=\beta_0+\beta_1 wt+\beta_2 hp+\beta_3 disp+\varepsilon
+\]
+
+```{r}
+# Tu código
+```
+
+## 2.1 Interpretación general
+
+A partir de `summary()` responde:
+
+1. ¿Cuál es el valor de $R^2$?
+2. ¿Cuál es el $R^2$ ajustado?
+3. ¿El modelo es globalmente significativo? Justifica con la prueba F.
+4. ¿Qué predictores son individualmente significativos con $\alpha=0.05$?
+
+## 2.2 Interpretación de coeficientes
+
+Escribe la ecuación estimada del modelo e interpreta los coeficientes de `wt` y `hp` manteniendo constantes las demás variables.
+
+# 3. Mínimos cuadrados con matrices
+
+Construye manualmente la matriz de diseño $X$ y el vector $Y$. Calcula:
+
+\[
+\hat\beta=(X^TX)^{-1}X^TY
+\]
+
+```{r}
+# Tu código
+```
+
+Compara los coeficientes obtenidos con `coef(modelo)`.
+
+**Pregunta:** ¿deben ser iguales? Explica brevemente por qué.
+
+# 4. Selección de variables
+
+Obtén un modelo mediante AIC y otro mediante BIC usando selección por pasos en ambas direcciones.
+
+```{r}
+# Tu código
+```
+
+**Preguntas:**
+
+1. ¿AIC y BIC seleccionan el mismo modelo?
+2. ¿Qué variable o variables se eliminan?
+3. Compara $R^2$ ajustado, AIC y BIC del modelo completo y del modelo seleccionado.
+
+Define como `modelo_final` el modelo que consideres más adecuado y justifica brevemente tu elección.
+
+```{r}
+# Tu código
+```
+
+# 5. Intervalos de confianza y predicción
+
+Considera un automóvil con:
+
+- `wt = 3.0`
+- `hp = 150`
+- `disp = 200`
+
+Adapta `newdata` a las variables que permanezcan en tu `modelo_final`.
+
+```{r}
+# Tu código
+```
+
+Calcula:
+
+1. Predicción puntual de `mpg`.
+2. Intervalo de confianza del 95% para la media esperada.
+3. Intervalo de predicción del 95% para un automóvil individual.
+
+**Pregunta:** ¿cuál intervalo es más ancho y por qué?
+
+# 6. Multicolinealidad
+
+Calcula el VIF de los predictores del `modelo_final`. Puedes usar `car::vif()` o calcularlo manualmente con regresiones auxiliares.
+
+```{r}
+# Tu código
+```
+
+**Pregunta:** ¿hay evidencia de multicolinealidad importante usando como referencia VIF > 5?
+
+# 7. Validación de supuestos
+
+Obtén residuos y valores ajustados.
+
+```{r}
+# Tu código
+```
+
+## 7.1 Normalidad de residuos
+
+Realiza un histograma, un gráfico Q-Q y la prueba de Shapiro-Wilk.
+
+```{r}
+# Tu código
+```
+
+**Pregunta:** con $\alpha=0.05$, ¿los residuos son compatibles con normalidad?
+
+## 7.2 Homocedasticidad
+
+Grafica residuos contra valores ajustados y realiza una prueba de Breusch-Pagan.
+
+```{r}
+# Tu código
+```
+
+**Pregunta:** ¿hay evidencia de heterocedasticidad?
+
+## 7.3 Independencia
+
+Grafica los residuos según el orden de observación y calcula el estadístico de Durbin-Watson.
+
+```{r}
+# Tu código
+```
+
+**Pregunta:** ¿existe una señal fuerte de autocorrelación?
+
+# 8. Datos atípicos e influyentes
+
+## 8.1 Residuos estandarizados y studentizados
+
+Identifica observaciones con:
+
+- $|rstandard|>2$
+- $|rstudent|>3$
+
+```{r}
+# Tu código
+```
+
+## 8.2 Leverage
+
+Usa como referencia:
+
+\[
+h_i>\frac{2p}{n}
+\]
+
+donde $p$ es el número de parámetros del modelo, incluyendo el intercepto.
+
+```{r}
+# Tu código
+```
+
+## 8.3 Distancia de Cook
+
+Usa como referencia:
+
+\[
+D_i>\frac{4}{n}
+\]
+
+```{r}
+# Tu código
+```
+
+**Preguntas:**
+
+1. ¿Qué observaciones requieren mayor atención?
+2. ¿Una observación con leverage alto necesariamente es atípica en la respuesta?
+3. ¿Una observación con distancia de Cook alta debería eliminarse automáticamente? Explica.
+
+# 9. Comparación final
+
+Si identificaste observaciones influyentes, crea una copia de los datos sin ellas y vuelve a ajustar el mismo modelo únicamente para estudiar cuánto cambian los resultados. No concluyas que deben eliminarse definitivamente solo porque mejoró el ajuste.
+
+```{r}
+# Tu código
+```
+
+Compara:
+
+- Coeficientes.
+- $R^2$ ajustado.
+- Significancia de los predictores.
+- Comportamiento de los residuos.
+
+# 10. Conclusión
+
+Redacta una conclusión breve respondiendo:
+
+1. ¿Qué variables explican mejor `mpg`?
+2. ¿Qué tan bueno es el ajuste del modelo final?
+3. ¿Se cumplen razonablemente los supuestos?
+4. ¿Existen observaciones que deban revisarse por influencia?
+5. ¿Usarías el modelo para predicción? Justifica.
