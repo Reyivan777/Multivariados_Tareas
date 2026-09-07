@@ -1,5 +1,5 @@
 ---
-title: "Actividad 2.9 Pronósticos en series de tiempo"
+title: "Actividad 1.11A Series de tiempo"
 author: "Rey Iván De La Fuente Chávez"
 date: "2026-09-07"
 output: html_document
@@ -248,8 +248,12 @@ La serie presenta tendencia y estacionalidad trimestral, por lo que no es estaci
 
 **Opción B. Se utilizó IA.**
 
-- **Herramienta:** ChatGPT.
-- **Uso realizado:** apoyo para estructurar el procedimiento, escribir y revisar el código en R y organizar el análisis de la serie de tiempo.
-- **Secciones donde se utilizó:** desarrollo del código, comparación de modelos y redacción inicial de interpretaciones.
-- **Validación realizada por el estudiante:** pendiente de validación final al ejecutar y renderizar el archivo en RStudio; los resultados serán revisados antes de la entrega.
-- **Responsabilidad:** el estudiante revisará, verificará y asumirá la responsabilidad del contenido final entregado.
+Herramienta: ChatGPT.
+
+Uso realizado: apoyo para estructurar el procedimiento, escribir y revisar el código en R y organizar el análisis de la serie de tiempo.
+
+Secciones donde se utilizó: desarrollo del código, comparación de modelos y redacción inicial de interpretaciones.
+
+Validación realizada por el estudiante: pendiente de validación final al ejecutar y renderizar el archivo en RStudio; los resultados serán revisados antes de la entrega.
+
+Responsabilidad: el estudiante revisará, verificará y asumirá la responsabilidad del contenido final entregado.
