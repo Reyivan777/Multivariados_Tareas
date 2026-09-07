@@ -42,8 +42,9 @@ La serie no es estacionaria, ya que presenta una tendencia general creciente y u
 ### Autocorrelación
 
 ```{r}
-acf(ventas_ts,
+acf(as.numeric(ventas_ts),
     lag.max = 12,
+    xlab = "Rezago (trimestres)",
     main = "Autocorrelación de las ventas")
 ```
 
