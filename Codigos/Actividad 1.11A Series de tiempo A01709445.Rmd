@@ -236,23 +236,29 @@ serie_mult_cuad <- c(pred_mult_cuad, pron_mult_cuad)
 plot(tiempo_total, ventas_total,
      type = "o",
      pch = 16,
+     col = "black",
      xlab = "Quarter",
      ylab = "Sales (thousands)",
      main = "Original data and forecasts",
      ylim = range(c(ventas, serie_add_lin,
                     serie_mult_lin, serie_mult_cuad)))
 
-lines(tiempo_total, serie_add_lin, lty = 2)
-lines(tiempo_total, serie_mult_lin, lty = 3)
-lines(tiempo_total, serie_mult_cuad, lty = 4, lwd = 2)
-abline(v = 16.5, lty = 2)
+lines(tiempo_total, serie_add_lin,
+      lty = 2, col = "steelblue", lwd = 2)
+lines(tiempo_total, serie_mult_lin,
+      lty = 3, col = "darkorange", lwd = 2)
+lines(tiempo_total, serie_mult_cuad,
+      lty = 1, col = "firebrick", lwd = 2)
+abline(v = 16.5, lty = 2, col = "gray40")
 
 legend("topleft",
        legend = c("Original data",
                   "Additive linear",
                   "Multiplicative linear",
                   "Multiplicative quadratic"),
-       lty = c(1, 2, 3, 4),
+       col = c("black", "steelblue", "darkorange", "firebrick"),
+       lty = c(1, 2, 3, 1),
+       lwd = c(1, 2, 2, 2),
        pch = c(16, NA, NA, NA),
        bty = "n")
 ```
