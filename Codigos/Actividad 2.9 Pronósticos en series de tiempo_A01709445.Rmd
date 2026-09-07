@@ -1,0 +1,255 @@
+---
+title: "Actividad 2.9 Pronósticos en series de tiempo"
+author: "Rey Iván De La Fuente Chávez"
+date: "2026-09-07"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## 1. Datos de ventas
+
+Se tienen ventas trimestrales de televisores durante cuatro años, expresadas en miles.
+
+```{r}
+ventas <- c(4.8, 4.1, 6.0, 6.5,
+            5.8, 5.2, 6.8, 7.4,
+            6.0, 5.6, 7.5, 7.8,
+            6.3, 5.9, 8.0, 8.4)
+
+tiempo <- 1:16
+ventas_ts <- ts(ventas, start = c(1, 1), frequency = 4)
+
+ventas_ts
+```
+
+## 2. Tendencia y estacionalidad
+
+### Serie de tiempo
+
+```{r}
+plot(ventas_ts,
+     type = "o",
+     xlab = "Año",
+     ylab = "Ventas (miles)",
+     main = "Ventas trimestrales de televisores")
+```
+
+La serie no parece estacionaria, ya que las ventas presentan una tendencia general creciente y un patrón que se repite entre los trimestres.
+
+### Autocorrelación
+
+```{r}
+acf(ventas_ts,
+    lag.max = 12,
+    main = "Autocorrelación de las ventas")
+```
+
+La gráfica de autocorrelación permitirá verificar si existe dependencia entre las observaciones separadas por distintos rezagos, especialmente en rezagos asociados con la frecuencia trimestral.
+
+### Modelos aditivo y multiplicativo
+
+Se prueban las dos formas de descomposición para posteriormente comparar cuál representa mejor la serie.
+
+```{r}
+descomp_add <- decompose(ventas_ts, type = "additive")
+descomp_mult <- decompose(ventas_ts, type = "multiplicative")
+
+plot(descomp_add)
+plot(descomp_mult)
+```
+
+## 3. Índices estacionales y serie desestacionalizada
+
+```{r}
+indice_add <- tapply(descomp_add$seasonal,
+                     cycle(ventas_ts),
+                     mean,
+                     na.rm = TRUE)
+
+indice_mult <- tapply(descomp_mult$seasonal,
+                      cycle(ventas_ts),
+                      mean,
+                      na.rm = TRUE)
+
+indices <- data.frame(
+  Trimestre = 1:4,
+  Aditivo = as.numeric(indice_add),
+  Multiplicativo = as.numeric(indice_mult)
+)
+
+round(indices, 4)
+```
+
+En el modelo aditivo, un índice positivo representa ventas por encima de la tendencia y uno negativo ventas por debajo. En el multiplicativo, valores mayores que 1 aumentan el nivel esperado y valores menores que 1 lo reducen.
+
+```{r}
+estacional_add <- indice_add[cycle(ventas_ts)]
+estacional_mult <- indice_mult[cycle(ventas_ts)]
+
+ventas_des_add <- ventas_ts - estacional_add
+ventas_des_mult <- ventas_ts / estacional_mult
+
+plot(ventas_des_add,
+     type = "o",
+     xlab = "Año",
+     ylab = "Ventas desestacionalizadas",
+     main = "Serie desestacionalizada - modelo aditivo")
+
+plot(ventas_des_mult,
+     type = "o",
+     xlab = "Año",
+     ylab = "Ventas desestacionalizadas",
+     main = "Serie desestacionalizada - modelo multiplicativo")
+```
+
+## 4. Modelo lineal de tendencia
+
+Se ajustan modelos lineales sobre las ventas desestacionalizadas. El modelo multiplicativo se analiza con mayor detalle y después se comparará con los demás mediante sus errores de predicción.
+
+```{r}
+modelo_lineal_add <- lm(as.numeric(ventas_des_add) ~ tiempo)
+modelo_lineal_mult <- lm(as.numeric(ventas_des_mult) ~ tiempo)
+
+summary(modelo_lineal_mult)
+```
+
+El resumen del modelo permite evaluar la significancia individual del coeficiente de tiempo mediante su prueba t y la significancia global mediante la prueba F.
+
+### Análisis de residuos
+
+```{r}
+par(mfrow = c(2, 2))
+plot(modelo_lineal_mult)
+par(mfrow = c(1, 1))
+
+shapiro.test(residuals(modelo_lineal_mult))
+acf(residuals(modelo_lineal_mult),
+    main = "Autocorrelación de los residuos")
+```
+
+Se revisan normalidad, varianza aproximadamente constante, posibles observaciones influyentes e independencia de los residuos. La interpretación final se realizará con las salidas obtenidas al renderizar.
+
+## 5. Modelo cuadrático
+
+Se agrega el término cuadrático del tiempo para explorar una tendencia no lineal.
+
+```{r}
+tiempo2 <- tiempo^2
+
+modelo_cuad_mult <- lm(as.numeric(ventas_des_mult) ~ tiempo + tiempo2)
+summary(modelo_cuad_mult)
+```
+
+## 6. CME y EPAM
+
+Se comparan tres modelos: lineal aditivo, lineal multiplicativo y cuadrático multiplicativo.
+
+```{r}
+pred_add_lin <- fitted(modelo_lineal_add) + estacional_add
+pred_mult_lin <- fitted(modelo_lineal_mult) * estacional_mult
+pred_mult_cuad <- fitted(modelo_cuad_mult) * estacional_mult
+
+metricas <- function(real, pred) {
+  c(
+    CME = mean((real - pred)^2, na.rm = TRUE),
+    EPAM = mean(abs((real - pred) / real), na.rm = TRUE) * 100
+  )
+}
+
+comparacion <- rbind(
+  "Aditivo lineal" = metricas(ventas, pred_add_lin),
+  "Multiplicativo lineal" = metricas(ventas, pred_mult_lin),
+  "Multiplicativo cuadrático" = metricas(ventas, pred_mult_cuad)
+)
+
+round(comparacion, 4)
+```
+
+El mejor modelo será el que presente los valores más bajos de CME y EPAM.
+
+```{r}
+mejor_CME <- rownames(comparacion)[which.min(comparacion[, "CME"])]
+mejor_EPAM <- rownames(comparacion)[which.min(comparacion[, "EPAM"])]
+
+cat("Menor CME:", mejor_CME, "\n")
+cat("Menor EPAM:", mejor_EPAM, "\n")
+```
+
+## 7. Pronóstico del siguiente año
+
+Se calculan los pronósticos de los cuatro trimestres del año 5 para los tres modelos analizados.
+
+```{r}
+futuro <- data.frame(
+  tiempo = 17:20,
+  tiempo2 = (17:20)^2
+)
+
+est_add_fut <- as.numeric(indice_add[1:4])
+est_mult_fut <- as.numeric(indice_mult[1:4])
+
+pron_add_lin <- predict(modelo_lineal_add, newdata = futuro) + est_add_fut
+pron_mult_lin <- predict(modelo_lineal_mult, newdata = futuro) * est_mult_fut
+pron_mult_cuad <- predict(modelo_cuad_mult, newdata = futuro) * est_mult_fut
+
+pronosticos <- data.frame(
+  Año = rep(5, 4),
+  Trimestre = 1:4,
+  Aditivo_lineal = pron_add_lin,
+  Multiplicativo_lineal = pron_mult_lin,
+  Multiplicativo_cuadratico = pron_mult_cuad
+)
+
+round(pronosticos, 3)
+```
+
+### Gráfica final
+
+```{r}
+tiempo_total <- 1:20
+ventas_total <- c(ventas, rep(NA, 4))
+
+serie_add_lin <- c(pred_add_lin, pron_add_lin)
+serie_mult_lin <- c(pred_mult_lin, pron_mult_lin)
+serie_mult_cuad <- c(pred_mult_cuad, pron_mult_cuad)
+
+plot(tiempo_total, ventas_total,
+     type = "o",
+     pch = 16,
+     xlab = "Trimestre",
+     ylab = "Ventas (miles)",
+     main = "Datos originales y pronósticos",
+     ylim = range(c(ventas, serie_add_lin,
+                    serie_mult_lin, serie_mult_cuad)))
+
+lines(tiempo_total, serie_add_lin, lty = 2)
+lines(tiempo_total, serie_mult_lin, lty = 3)
+lines(tiempo_total, serie_mult_cuad, lty = 4, lwd = 2)
+abline(v = 16.5, lty = 2)
+
+legend("topleft",
+       legend = c("Datos originales",
+                  "Aditivo lineal",
+                  "Multiplicativo lineal",
+                  "Multiplicativo cuadrático"),
+       lty = c(1, 2, 3, 4),
+       pch = c(16, NA, NA, NA),
+       bty = "n")
+```
+
+## Conclusión
+
+La serie presenta tendencia y estacionalidad trimestral, por lo que no es estacionaria. Se compararon tres modelos que combinan estructuras aditivas y multiplicativas con tendencias lineales y no lineales. La selección final se realiza con base en CME y EPAM; después de renderizar el documento se completará la interpretación numérica de los resultados y de los residuos.
+
+## Declaratoria de uso de IA
+
+**Opción B. Se utilizó IA.**
+
+- **Herramienta:** ChatGPT.
+- **Uso realizado:** apoyo para estructurar el procedimiento, escribir y revisar el código en R y organizar el análisis de la serie de tiempo.
+- **Secciones donde se utilizó:** desarrollo del código, comparación de modelos y redacción inicial de interpretaciones.
+- **Validación realizada por el estudiante:** pendiente de validación final al ejecutar y renderizar el archivo en RStudio; los resultados serán revisados antes de la entrega.
+- **Responsabilidad:** el estudiante revisará, verificará y asumirá la responsabilidad del contenido final entregado.
