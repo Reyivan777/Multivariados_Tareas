@@ -141,7 +141,7 @@ prod(eigen_S$values)
 
 ## c) Revisar si existe un valor propio cercano a cero e interpretar qué significa (4 puntos)
 
-Escribe tu respuesta aquí: El tercer valor propio esta muy cercano a 0, lo que indica que la matriz no se agranda ni se achica por lo que es una fuerte señal de que aunque los datos estan en R\^3 realemente se podrían representar en R\^2
+Escribe tu respuesta aquí: El tercer valor propio esta muy cercano a 0, lo que indica que la varianza es aproximadamente 0 en esa dirección por lo que es una fuerte señal de que aunque los datos estan en R\^3 realemente se podrían representar en R\^2
 
 ## d) Verificar en los datos la relación lineal
 
@@ -248,7 +248,7 @@ Calcula también la proporción de observaciones dentro.
 
 ```{r}
 # Escribe tu código aquí
-limite <- qchisq(0.5, df = ncol(X))
+limite <- qchisq(0.5, df = ncol(Autos))
 dentro <- d2 <= limite
 sum(dentro)
 mean(dentro)
