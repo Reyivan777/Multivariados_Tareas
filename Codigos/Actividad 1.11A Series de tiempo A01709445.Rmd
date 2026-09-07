@@ -275,10 +275,10 @@ La serie de ventas no es estacionaria porque presenta una tendencia creciente y 
 
 Herramienta: ChatGPT.
 
-Uso realizado: apoyo para estructurar el procedimiento, escribir y revisar el código en R y organizar el análisis de series de tiempo.
+Uso realizado: apoyo para estructurar el procedimiento y escribir el código en R
 
-Secciones donde se utilizó: desarrollo del código, comparación de modelos y redacción de interpretaciones.
+Secciones donde se utilizó: desarrollo del código, comparación de modelos
 
-Validación realizada por el estudiante: el código fue ejecutado y renderizado en RStudio; las salidas obtenidas se utilizaron para completar las interpretaciones.
+Validación realizada por el estudiante: el código fue ejecutado y renderizado en RStudio
 
-Responsabilidad: el estudiante revisará, verificará y asumirá la responsabilidad del contenido final entregado.
+Asumo la responsabilidad del contenido final entregado.
