@@ -37,7 +37,7 @@ plot(ventas_ts,
      main = "Ventas trimestrales de televisores")
 ```
 
-La serie no parece estacionaria, ya que las ventas presentan una tendencia general creciente y un patrón que se repite entre los trimestres.
+La serie no es estacionaria, ya que presenta una tendencia general creciente y un patrón trimestral repetitivo. En particular, el segundo trimestre suele presentar las ventas más bajas y el cuarto las más altas.
 
 ### Autocorrelación
 
@@ -47,11 +47,11 @@ acf(ventas_ts,
     main = "Autocorrelación de las ventas")
 ```
 
-La gráfica de autocorrelación permitirá verificar si existe dependencia entre las observaciones separadas por distintos rezagos, especialmente en rezagos asociados con la frecuencia trimestral.
+La autocorrelación muestra un valor importante en el rezago 4, consistente con una estacionalidad trimestral: observaciones del mismo trimestre en años consecutivos tienden a comportarse de manera semejante.
 
 ### Modelos aditivo y multiplicativo
 
-Se prueban las dos formas de descomposición para posteriormente comparar cuál representa mejor la serie.
+Se prueban las dos formas de descomposición para comparar cuál representa mejor la serie.
 
 ```{r}
 descomp_add <- decompose(ventas_ts, type = "additive")
@@ -60,6 +60,8 @@ descomp_mult <- decompose(ventas_ts, type = "multiplicative")
 plot(descomp_add)
 plot(descomp_mult)
 ```
+
+Ambas descomposiciones representan el patrón estacional. La elección final entre una estructura aditiva o multiplicativa se realiza comparando los errores de los modelos ajustados.
 
 ## 3. Índices estacionales y serie desestacionalizada
 
@@ -83,7 +85,7 @@ indices <- data.frame(
 round(indices, 4)
 ```
 
-En el modelo aditivo, un índice positivo representa ventas por encima de la tendencia y uno negativo ventas por debajo. En el multiplicativo, valores mayores que 1 aumentan el nivel esperado y valores menores que 1 lo reducen.
+Los índices confirman el patrón observado. En el modelo multiplicativo, el trimestre 1 se encuentra aproximadamente 6.9% por debajo de la tendencia y el trimestre 2 cerca de 16.4% por debajo. En cambio, los trimestres 3 y 4 se encuentran aproximadamente 9.2% y 14.1% por encima, respectivamente.
 
 ```{r}
 estacional_add <- indice_add[cycle(ventas_ts)]
@@ -105,9 +107,11 @@ plot(ventas_des_mult,
      main = "Serie desestacionalizada - modelo multiplicativo")
 ```
 
+Al eliminar el efecto estacional, en ambas series se observa con mayor claridad la tendencia creciente de las ventas.
+
 ## 4. Modelo lineal de tendencia
 
-Se ajustan modelos lineales sobre las ventas desestacionalizadas. El modelo multiplicativo se analiza con mayor detalle y después se comparará con los demás mediante sus errores de predicción.
+Se ajustan modelos lineales sobre las ventas desestacionalizadas. El modelo multiplicativo se analiza con mayor detalle y después se compara con los demás mediante sus errores de predicción.
 
 ```{r}
 modelo_lineal_add <- lm(as.numeric(ventas_des_add) ~ tiempo)
@@ -116,7 +120,11 @@ modelo_lineal_mult <- lm(as.numeric(ventas_des_mult) ~ tiempo)
 summary(modelo_lineal_mult)
 ```
 
-El resumen del modelo permite evaluar la significancia individual del coeficiente de tiempo mediante su prueba t y la significancia global mediante la prueba F.
+Para el modelo multiplicativo, la tendencia estimada es aproximadamente:
+
+$$\hat{y}=5.1080+0.1474t$$
+
+El coeficiente de tiempo es significativo ($p=4.25\times10^{-9}$), por lo que existe evidencia de una tendencia creciente. El modelo también es globalmente significativo ($p=4.25\times10^{-9}$) y explica aproximadamente 92.1% de la variabilidad de las ventas desestacionalizadas ($R^2=0.9208$).
 
 ### Análisis de residuos
 
@@ -130,7 +138,7 @@ acf(residuals(modelo_lineal_mult),
     main = "Autocorrelación de los residuos")
 ```
 
-Se revisan normalidad, varianza aproximadamente constante, posibles observaciones influyentes e independencia de los residuos. La interpretación final se realizará con las salidas obtenidas al renderizar.
+Los residuos no muestran un patrón fuerte de curvatura o un cambio claro de variabilidad. La observación 2 destaca respecto a las demás y conviene tenerla presente como una observación potencialmente influyente. La prueba de Shapiro-Wilk obtiene $p=0.7307$, por lo que no se rechaza la normalidad. Además, la autocorrelación de los residuos no presenta rezagos claramente significativos, por lo que no se observa evidencia fuerte de dependencia temporal restante.
 
 ## 5. Modelo cuadrático
 
@@ -142,6 +150,12 @@ tiempo2 <- tiempo^2
 modelo_cuad_mult <- lm(as.numeric(ventas_des_mult) ~ tiempo + tiempo2)
 summary(modelo_cuad_mult)
 ```
+
+El modelo cuadrático estimado es aproximadamente:
+
+$$\hat{y}=4.7903+0.2533t-0.00623t^2$$
+
+Tanto el término lineal ($p=3.56\times10^{-5}$) como el cuadrático ($p=0.0204$) son significativos. El modelo es globalmente significativo y alcanza un $R^2=0.9484$. El coeficiente negativo de $t^2$ indica que las ventas siguen aumentando, pero el ritmo de crecimiento se va reduciendo con el tiempo.
 
 ## 6. CME y EPAM
 
@@ -168,7 +182,7 @@ comparacion <- rbind(
 round(comparacion, 4)
 ```
 
-El mejor modelo será el que presente los valores más bajos de CME y EPAM.
+El modelo multiplicativo cuadrático presenta los menores errores, con un CME de 0.0219 y un EPAM de 1.9493%. Por lo tanto, es el mejor de los tres modelos evaluados. Los dos modelos lineales presentan resultados muy similares entre sí, pero ambos tienen errores mayores.
 
 ```{r}
 mejor_CME <- rownames(comparacion)[which.min(comparacion[, "CME"])]
@@ -206,6 +220,8 @@ pronosticos <- data.frame(
 round(pronosticos, 3)
 ```
 
+Con el modelo seleccionado, los pronósticos para el año 5 son 6.790, 6.131, 8.027 y 8.406 miles de televisores para los trimestres 1 a 4, respectivamente. Se conserva el patrón estacional, con menores ventas en el segundo trimestre y mayores ventas en el cuarto.
+
 ### Gráfica final
 
 ```{r}
@@ -240,9 +256,11 @@ legend("topleft",
        bty = "n")
 ```
 
+La gráfica permite comparar los ajustes históricos y los pronósticos. Los tres modelos reproducen el patrón trimestral, pero el modelo multiplicativo cuadrático se ajusta mejor de acuerdo con CME y EPAM y proyecta una desaceleración del crecimiento para el año 5.
+
 ## Conclusión
 
-La serie presenta tendencia y estacionalidad trimestral, por lo que no es estacionaria. Se compararon tres modelos que combinan estructuras aditivas y multiplicativas con tendencias lineales y no lineales. La selección final se realiza con base en CME y EPAM; después de renderizar el documento se completará la interpretación numérica de los resultados y de los residuos.
+La serie de ventas no es estacionaria porque presenta tendencia creciente y estacionalidad trimestral. Después de desestacionalizarla se ajustaron tres modelos. El modelo multiplicativo cuadrático fue el mejor, con CME = 0.0219 y EPAM = 1.9493%, y sus términos resultaron estadísticamente significativos. Por ello se utiliza para pronosticar el año 5, manteniendo el patrón de menores ventas en el segundo trimestre y mayores ventas en el cuarto.
 
 ## Declaratoria de uso de IA
 
@@ -252,8 +270,8 @@ Herramienta: ChatGPT.
 
 Uso realizado: apoyo para estructurar el procedimiento, escribir y revisar el código en R y organizar el análisis de la serie de tiempo.
 
-Secciones donde se utilizó: desarrollo del código, comparación de modelos y redacción inicial de interpretaciones.
+Secciones donde se utilizó: desarrollo del código, comparación de modelos y redacción de interpretaciones.
 
-Validación realizada por el estudiante: pendiente de validación final al ejecutar y renderizar el archivo en RStudio; los resultados serán revisados antes de la entrega.
+Validación realizada por el estudiante: el código fue ejecutado y renderizado en RStudio; las salidas obtenidas se utilizaron para completar las interpretaciones.
 
 Responsabilidad: el estudiante revisará, verificará y asumirá la responsabilidad del contenido final entregado.
