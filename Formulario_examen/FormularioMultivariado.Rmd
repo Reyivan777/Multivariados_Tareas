@@ -381,3 +381,36 @@ dentro <- d2 <= limite
 sum(dentro)
 mean(dentro)
 ```
+
+## Diagrama Chi-cuadrado de Mahalanobis
+
+Usar para evaluar visualmente normalidad multivariada. Si los datos son aproximadamente normales multivariados, las distancias de Mahalanobis ordenadas deben seguir aproximadamente los cuantiles teóricos de una Chi-cuadrada con $p$ grados de libertad.
+
+``` r
+d2 <- mahalanobis(X, colMeans(X), cov(X))
+
+n <- nrow(X)
+p <- ncol(X)
+
+d2_ordenadas <- sort(d2)
+probabilidades <- ((1:n) - 0.5) / n
+chi2 <- qchisq(probabilidades, df = p)
+
+plot(chi2, d2_ordenadas,
+     main = "Diagrama Chi-cuadrado",
+     xlab = "Cuantiles teóricos Chi-cuadrado",
+     ylab = "Distancias de Mahalanobis ordenadas",
+     pch = 19)
+
+abline(0, 1)
+```
+
+Argumentos clave:
+
+- `chi2`: cuantiles teóricos de la distribución Chi-cuadrada.
+- `d2_ordenadas`: distancias de Mahalanobis al cuadrado ordenadas.
+- `df = p`: grados de libertad iguales al número de variables.
+- `pch = 19`: puntos sólidos.
+- `abline(0, 1)`: línea de referencia $y=x$.
+
+Si los puntos siguen aproximadamente la línea, los datos son compatibles con normalidad multivariada. Curvaturas fuertes o separaciones grandes, especialmente en los extremos, sugieren desviaciones de normalidad.
