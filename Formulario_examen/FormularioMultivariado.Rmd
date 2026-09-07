@@ -6,24 +6,18 @@ output:
     df_print: paged
 ---
 
-# 0. Matrices y estadística
+# 0. Base: matrices, datos y visualización
 
-## Crear matrices
+## Matrices y operaciones
 
-Crear una matriz por filas. Sustituir los valores y `nrow` según el problema.
+Crear matrices por filas y usar `%*%` para producto matricial.
 
 ``` r
 A <- matrix(c(a11, a12, a13,
               a21, a22, a23,
               a31, a32, a33),
             nrow = 3, byrow = TRUE)
-```
 
-## Operaciones básicas con matrices
-
-Usar con matrices de dimensiones compatibles.
-
-``` r
 A + B
 4*A + 3*B
 t(A)
@@ -32,109 +26,139 @@ det(A)
 A %*% B
 ```
 
-Para el producto matricial:
+$$A_{m\times n}B_{n\times p}=C_{m\times p}, \qquad \det(A)=\det(A^T)$$
 
-$$A_{m\times n}B_{n\times p}=C_{m\times p}$$
+## Preparar datos
 
-Propiedad del determinante usada en la actividad:
-
-$$\det(A)=\det(A^T)$$
-
-## Seleccionar variables y convertir a matriz
-
-Sustituir `x1, x2, ...` por las variables cuantitativas que se utilizarán.
+Usar solo las variables cuantitativas que entren al análisis.
 
 ``` r
-variables <- c("x1", "x2", "x3", "x4")
+variables <- c("x1", "x2", "x3")
 X <- as.matrix(datos[, variables])
 n <- nrow(X)
+p <- ncol(X)
 ```
 
-## Vector de medias poblacional
+## Medias, centrado y covarianza
 
-Usar cuando se pida calcular el vector de medias mediante notación matricial.
+Media por columnas:
+
+``` r
+medias <- colMeans(X)
+```
+
+Si piden la media con notación matricial:
 
 $$\boldsymbol{\mu}=\frac{1}{n}\mathbf{1}^TX$$
 
 ``` r
 unos <- matrix(1, nrow = n, ncol = 1)
 mu <- (t(unos) %*% X) / n
-mu
 ```
 
-## Matriz de varianzas y covarianzas poblacional
-
-Centrar primero los datos:
+Centrar datos:
 
 $$X_c=X-\mathbf{1}\boldsymbol{\mu}$$
 
-Usar `n` en el denominador cuando el ejercicio trate los datos como población.
+``` r
+Xc <- sweep(X, 2, colMeans(X), "-")
+```
+
+Covarianza **poblacional**:
 
 $$\Sigma=\frac{1}{n}X_c^TX_c$$
 
 ``` r
-Sigma <- t(X - unos %*% mu) %*% (X - unos %*% mu) / n
-Sigma
+Sigma <- t(Xc) %*% Xc / n
 ```
 
-## Matriz de correlación a partir de Sigma
+Covarianza **muestral**:
 
-Si $D$ contiene las desviaciones estándar en su diagonal:
+$$S=\frac{1}{n-1}X_c^TX_c$$
 
-$$D=\operatorname{diag}(\sqrt{\sigma_{11}},\sqrt{\sigma_{22}},\ldots,\sqrt{\sigma_{pp}})$$
+``` r
+S <- t(Xc) %*% Xc / (n - 1)
+S <- cov(X)      # equivalente directo
+```
 
-entonces:
+## Correlación a partir de la covarianza
 
 $$R=D^{-1}\Sigma D^{-1}$$
 
-Construirla a partir de las desviaciones estándar de la diagonal de `Sigma`.
-
 ``` r
-varianzas <- diag(Sigma)
-desviaciones <- sqrt(varianzas)
-D_inv <- diag(1 / desviaciones)
+desv <- sqrt(diag(Sigma))
+D_inv <- diag(1 / desv)
 R <- D_inv %*% Sigma %*% D_inv
-R
 ```
 
 ## Valores y vectores propios
 
-Para una matriz $M$, un vector propio $\mathbf{v}$ y su valor propio $\lambda$ cumplen:
-
 $$M\mathbf{v}=\lambda\mathbf{v}$$
 
-Aplicar `eigen()` a la matriz de covarianzas o de correlación según lo que pida el problema.
+- `values`: cantidad de variabilidad en cada dirección.
+- `vectors`: direcciones o combinaciones de variables.
 
 ``` r
-eigen_cov <- eigen(Sigma)
-eigen_cov$values
-eigen_cov$vectors
-
-eigen_cor <- eigen(R)
-eigen_cor$values
-eigen_cor$vectors
+eigen_M <- eigen(M)
+eigen_M$values
+eigen_M$vectors
 ```
+
+## Diagrama de dispersión
+
+``` r
+plot(x, y,
+     main = "Título",
+     xlab = "Variable X",
+     ylab = "Variable Y",
+     pch = 19)
+```
+
+`x`, `y`: variables; `pch = 19`: puntos sólidos.
 
 # 1. Normal multivariada
 
 ## Probabilidad acumulada bivariada
 
-Para $X\sim N_2(\mu,\Sigma)$ y calcular $P(X_1\le x_1, X_2\le x_2)$, sustituir `mu`, `Sigma` y `x`.
-
-$$X\sim N_p(\boldsymbol{\mu},\Sigma)$$
+Para $X\sim N_2(\mu,\Sigma)$ y $P(X_1\le x_1, X_2\le x_2)$:
 
 ``` r
 mu <- c(mu1, mu2)
 Sigma <- matrix(c(var1, cov12,
-                  cov12, var2),
-                nrow = 2, byrow = TRUE)
+                  cov12, var2), nrow = 2, byrow = TRUE)
 x <- c(x1, x2)
+
 mnormt::pmnorm(x, mean = mu, varcov = Sigma)
 ```
 
-## Superficie y contornos de una normal bivariada
+## Transformación lineal
 
-Usar para visualizar la densidad. Sustituir `mu` y `Sigma`. La superficie con `plotly` es interactiva: permite rotar, acercar y consultar coordenadas.
+Si
+
+$$Y=AX+d, \qquad X\sim N_p(\mu_X,\Sigma_X)$$
+
+entonces
+
+$$\mu_Y=A\mu_X+d, \qquad \Sigma_Y=A\Sigma_XA^T$$
+
+``` r
+mu_y <- A %*% mu_x + d
+Sigma_y <- A %*% Sigma_x %*% t(A)
+```
+
+Para una combinación escalar $Z=aY+c$:
+
+$$\mu_Z=a\mu_Y+c, \qquad Var(Z)=a\Sigma_Ya^T$$
+
+``` r
+a <- matrix(c(a1, a2), nrow = 1)
+mu_z <- a %*% mu_y + constante
+var_z <- a %*% Sigma_y %*% t(a)
+```
+
+## Densidad bivariada: superficie y contornos
+
+Usar para visualizar la forma de la distribución. La altura representa **densidad**, no probabilidad.
 
 ``` r
 sd1 <- sqrt(Sigma[1,1])
@@ -145,179 +169,139 @@ x2 <- seq(mu[2]-4*sd2, mu[2]+4*sd2, length.out=100)
 f <- function(x1, x2) {
   mnormt::dmnorm(cbind(x1, x2), mean=mu, varcov=Sigma)
 }
-
 z <- outer(x1, x2, f)
 
-plotly::plot_ly(
-  x = x1,
-  y = x2,
-  z = t(z)
-) |>
+plotly::plot_ly(x=x1, y=x2, z=t(z)) |>
   plotly::add_surface() |>
-  plotly::layout(
-    scene = list(
-      xaxis = list(title = "X1"),
-      yaxis = list(title = "X2"),
-      zaxis = list(title = "Densidad")
-    )
-  )
+  plotly::layout(scene=list(
+    xaxis=list(title="X1"),
+    yaxis=list(title="X2"),
+    zaxis=list(title="Densidad")))
 
-contour(x1, x2, z,
-        xlab = "X1",
-        ylab = "X2")
+contour(x1, x2, z, xlab="X1", ylab="X2")
 ```
 
-## Transformación lineal de una normal multivariada
+## Pruebas de normalidad
 
-Si
+Para Mardia o Henze-Zirkler:
 
-$$Y=AX+d$$
-
-y $X\sim N_p(\mu_X,\Sigma_X)$, entonces:
-
-$$Y\sim N(A\mu_X+d,\;A\Sigma_XA^T)$$
-
-``` r
-mu_y <- A %*% mu_x + d
-Sigma_y <- A %*% Sigma_x %*% t(A)
-```
-
-## Combinación lineal de variables normales
-
-Para
-
-$$Z=aY+c$$
-
-la media y varianza son:
-
-$$\mu_Z=a\mu_Y+c$$
-
-$$\operatorname{Var}(Z)=a\Sigma_Ya^T$$
-
-``` r
-a <- matrix(c(a1, a2), nrow = 1)
-c <- constante
-mu_z <- a %*% mu_y + c
-var_z <- a %*% Sigma_y %*% t(a)
-```
-
-## QQ-Plot con distancias de Mahalanobis
-
-Usar para evaluar gráficamente normalidad multivariada. Sustituir `M` por las variables cuantitativas.
-
-$$d_i^2=(x_i-\bar{x})^TS^{-1}(x_i-\bar{x})$$
-
-``` r
-p <- ncol(M)
-media <- colMeans(M)
-S <- cov(M)
-d2M <- mahalanobis(M, media, S)
-teoricos <- qchisq(((1:nrow(M))-0.5)/nrow(M), df=p)
-plot(teoricos, sort(d2M),
-     xlab="Cuantiles teóricos Chi-cuadrada",
-     ylab="Distancias de Mahalanobis")
-abline(a=0, b=1, col="red")
-```
-
-## Prueba de Mardia
-
-Hipótesis:
-
-$$H_0:\text{ los datos siguen una distribución normal multivariada}$$
-
-$$H_1:\text{ los datos no siguen una distribución normal multivariada}$$
-
-Con $\alpha=0.05$: si `p.value < 0.05`, rechazar $H_0$.
+$$H_0:\text{ normal multivariada}, \qquad H_1:\text{ no normal multivariada}$$
 
 ``` r
 resultado_mardia <- MVN::mvn(data = M, mvn_test = "mardia")
-resultado_mardia
+resultado_hz <- MVN::mvn(data = M, mvn_test = "hz")
 ```
 
-## Normalidad univariada
+Regla con $\alpha=0.05$:
 
-Revisar cada variable con Shapiro-Wilk.
+- `p < 0.05` → rechazar $H_0$.
+- `p >= 0.05` → no rechazar $H_0$; **no significa demostrar normalidad**.
+
+Normalidad univariada:
 
 ``` r
 shapiro.test(M[,1])
 shapiro.test(M[,2])
 ```
 
-Con $\alpha=0.05$: si `p.value < 0.05`, rechazar normalidad para esa variable.
-
-# 2. Combinaciones lineales y validación
-
-## Matriz de covarianzas muestral
-
-Para datos muestrales usar $n-1$:
-
-$$S=\frac{1}{n-1}X_c^TX_c$$
+Visualizaciones del objeto `MVN`:
 
 ``` r
-medias <- colMeans(X)
-Xc <- sweep(X, 2, medias, "-")
+plot(resultado_hz, type = "persp")
+plot(resultado_hz, type = "contour")
+```
+
+`type="persp"`: superficie 3D. `type="contour"`: contornos 2D.
+
+## Distancias de Mahalanobis
+
+$$d_i^2=(x_i-\bar{x})^TS^{-1}(x_i-\bar{x})$$
+
+``` r
+d2 <- mahalanobis(X, colMeans(X), cov(X))
+```
+
+### Contorno de probabilidad
+
+Una observación está dentro si:
+
+$$d_i^2\leq\chi^2_{p,\,prob}$$
+
+``` r
+prob <- 0.50
+limite <- qchisq(prob, df = ncol(X))
+dentro <- d2 <= limite
+sum(dentro)
+mean(dentro)
+```
+
+**Importante:** `df = p = ncol(X)` del conjunto que se está analizando.
+
+### Diagrama Chi-cuadrado
+
+Usar para evaluar visualmente normalidad multivariada.
+
+``` r
 n <- nrow(X)
-S <- t(Xc) %*% Xc / (n - 1)
+p <- ncol(X)
+d2_ordenadas <- sort(d2)
+probs <- ((1:n) - 0.5) / n
+chi2 <- qchisq(probs, df = p)
+
+plot(chi2, d2_ordenadas,
+     xlab = "Cuantiles teóricos Chi-cuadrado",
+     ylab = "Mahalanobis ordenadas",
+     pch = 19)
+abline(0, 1)
 ```
 
-Equivalente directo:
+Interpretación: puntos aproximadamente sobre la línea → compatible con normalidad multivariada; desviaciones fuertes o curvatura → posible falta de normalidad.
 
-``` r
-S <- cov(X)
-```
+# 2. Combinaciones lineales y dependencia
 
 ## Combinaciones lineales
 
-Para $b^TX$ y $c^TX$:
+Para vectores $b$ y $c$:
 
 $$E(b^TX)=b^T\mu$$
 
-$$Var(b^TX)=b^TSb$$
-
-$$Var(c^TX)=c^TSc$$
+$$Var(b^TX)=b^TSb, \qquad Var(c^TX)=c^TSc$$
 
 $$Cov(b^TX,c^TX)=b^TSc$$
 
 ``` r
-bX <- X %*% b # bX
-cX <- X %*% c # cX
+bX <- X %*% b
+cX <- X %*% c
 
-t(b) %*% medias # Valor esperado
-t(c) %*% medias # Valor esperado
+t(b) %*% medias
+t(c) %*% medias
 
-t(b) %*% S %*% b # Varianza b
-t(c) %*% S %*% c # Varianza c
-t(b) %*% S %*% c # Covarianza b y c
+t(b) %*% S %*% b
+t(c) %*% S %*% c
+t(b) %*% S %*% c
 ```
 
-Si la covarianza es distinta de cero, las combinaciones no son independientes. Si provienen de una normal multivariada, covarianza cero implica independencia.
+Si la covarianza es distinta de 0, no son independientes. En una normal multivariada, covarianza 0 sí implica independencia.
 
 ## Varianza generalizada y singularidad
 
-La varianza generalizada es:
-
-$$GV=|S|$$
-
-También:
-
-$$|S|=\prod_{j=1}^{p}\lambda_j$$
+$$GV=|S|=\prod_{j=1}^{p}\lambda_j$$
 
 ``` r
-det(S)
 eigen_S <- eigen(S)
+det(S)
 eigen_S$values
 eigen_S$vectors
 prod(eigen_S$values)
 ```
 
-Si $|S|\approx0$ y aparece un valor propio cercano a cero, $S$ es singular y existe dependencia lineal entre las variables.
+Si $|S|\approx0$ y un valor propio es cercano a 0, existe una dirección con varianza casi nula y puede haber dependencia lineal.
 
-## Verificar relación lineal con el eigenvector de valor propio cero
+## Verificar relación lineal con el eigenvector de valor propio 0
 
-Si un valor propio es cercano a cero, tomar su eigenvector asociado. Ese vector contiene los coeficientes de una combinación lineal con varianza aproximadamente cero.
+Tomar el eigenvector asociado al eigenvalue de menor magnitud:
 
 ``` r
-eigen_S <- eigen(S)
 i0 <- which.min(abs(eigen_S$values))
 v0 <- eigen_S$vectors[, i0]
 
@@ -328,89 +312,6 @@ Xc %*% v0
 X %*% v0
 ```
 
-`Xc %*% v0` debe producir valores cercanos a cero. `X %*% v0` debe producir aproximadamente una constante. El eigenvector puede aparecer escalado o con signo contrario y sigue representando la misma relación.
-
-## Prueba de Henze-Zirkler
-
-Hipótesis:
-
-$$H_0:\text{ los datos siguen una distribución normal multivariada}$$
-
-$$H_1:\text{ los datos no siguen una distribución normal multivariada}$$
-
-``` r
-resultado_hz <- MVN::mvn(data = M, mvn_test = "hz")
-resultado_hz
-```
-
-Con $\alpha=0.05$: si `p.value < 0.05`, rechazar $H_0$.
-
-## Visualizaciones rápidas
-
-### Diagrama de dispersión
-
-Usar cuando se quiera ver la relación entre dos variables numéricas.
-
-``` r
-plot(x, y,
-     main = "Título",
-     xlab = "Variable X",
-     ylab = "Variable Y",
-     pch = 19)
-```
-
-### Visualizaciones de un resultado `MVN`
-
-Primero debe existir un objeto generado por `MVN::mvn()`, por ejemplo `resultado_hz`.
-
-``` r
-plot(resultado_hz, type = "persp")
-plot(resultado_hz, type = "contour")
-```
-
-## Contorno de probabilidad con Mahalanobis
-
-Para un contorno de probabilidad `prob` en $p$ dimensiones:
-
-$$d_i^2\leq\chi^2_{p,\,prob}$$
-
-``` r
-d2 <- mahalanobis(X, colMeans(X), cov(X))
-limite <- qchisq(prob, df = ncol(X))
-dentro <- d2 <= limite
-sum(dentro)
-mean(dentro)
-```
-
-## Diagrama Chi-cuadrado de Mahalanobis
-
-Usar para evaluar visualmente normalidad multivariada. Si los datos son aproximadamente normales multivariados, las distancias de Mahalanobis ordenadas deben seguir aproximadamente los cuantiles teóricos de una Chi-cuadrada con $p$ grados de libertad.
-
-``` r
-d2 <- mahalanobis(X, colMeans(X), cov(X))
-
-n <- nrow(X)
-p <- ncol(X)
-
-d2_ordenadas <- sort(d2)
-probabilidades <- ((1:n) - 0.5) / n
-chi2 <- qchisq(probabilidades, df = p)
-
-plot(chi2, d2_ordenadas,
-     main = "Diagrama Chi-cuadrado",
-     xlab = "Cuantiles teóricos Chi-cuadrado",
-     ylab = "Distancias de Mahalanobis ordenadas",
-     pch = 19)
-
-abline(0, 1)
-```
-
-Argumentos clave:
-
-- `chi2`: cuantiles teóricos de la distribución Chi-cuadrada.
-- `d2_ordenadas`: distancias de Mahalanobis al cuadrado ordenadas.
-- `df = p`: grados de libertad iguales al número de variables.
-- `pch = 19`: puntos sólidos.
-- `abline(0, 1)`: línea de referencia $y=x$.
-
-Si los puntos siguen aproximadamente la línea, los datos son compatibles con normalidad multivariada. Curvaturas fuertes o separaciones grandes, especialmente en los extremos, sugieren desviaciones de normalidad.
+- `Xc %*% v0` → valores cercanos a 0.
+- `X %*% v0` → aproximadamente una constante.
+- El eigenvector puede aparecer escalado o con signo contrario y representa la misma relación.
