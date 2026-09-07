@@ -151,7 +151,7 @@ para todas las observaciones (3 puntos)
 
 ```{r}
 # Escribe tu código aquí
-
+0.4082483*X[,1] + 0.8164966*X[,2] + -0.4082483*X[,3]
 ```
 
 ## e) Comprobar que el producto de los valores propios coincide aproximadamente con `det(S)` (3 puntos)

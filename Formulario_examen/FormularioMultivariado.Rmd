@@ -312,37 +312,6 @@ prod(eigen_S$values)
 
 Si $|S|\approx0$ y aparece un valor propio cercano a cero, $S$ es singular y existe dependencia lineal entre las variables.
 
-## Verificar la relación lineal con el vector propio asociado a $\lambda\approx0$
-
-Usar cuando `S` sea singular o aparezca un valor propio cercano a cero. El vector propio asociado indica la combinación de variables que no presenta variabilidad.
-
-Si
-
-$$S\mathbf{v}_0\approx0,$$
-
-entonces la combinación $X\mathbf{v}_0$ debe ser constante entre las observaciones. Para los datos centrados se cumple:
-
-$$X_c\mathbf{v}_0\approx0.$$
-
-``` r
-eigen_S <- eigen(S)
-
-i0 <- which.min(abs(eigen_S$values))
-v0 <- eigen_S$vectors[, i0]
-
-# Valor propio cercano a cero y su vector propio
-eigen_S$values[i0]
-v0
-
-# En datos centrados debe dar valores cercanos a cero
-Xc %*% v0
-
-# En datos originales debe ser constante
-X %*% v0
-```
-
-Los coeficientes de `v0` representan la relación entre las variables. El vector puede aparecer con signo contrario o multiplicado por una constante y sigue representando la misma relación. Si el ejercicio da una relación que debe ser igual a cero, `X %*% v0` también será aproximadamente cero.
-
 ## Prueba de Henze-Zirkler
 
 Hipótesis:
