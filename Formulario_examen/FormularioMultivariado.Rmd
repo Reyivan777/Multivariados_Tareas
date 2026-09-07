@@ -294,3 +294,111 @@ prod(eigen_S$values)
 ```
 
 Si $|S|\approx0$ y un valor propio es cercano a 0, existe una dirección con varianza casi nula y puede haber dependencia lineal.
+
+# 3. Componentes principales (ACP)
+
+## Idea y elección de matriz
+
+ACP reemplaza variables correlacionadas por componentes no correlacionadas, ordenadas de mayor a menor varianza.
+
+- **Covarianzas (`S`)**: usar si las variables tienen unidades y escalas comparables.
+- **Correlaciones (`R`)**: usar si las escalas son muy distintas; equivale a estandarizar.
+
+``` r
+S <- cov(X)
+R <- cor(X)
+M <- R          # cambiar por S si corresponde
+```
+
+## Valores propios y varianza explicada
+
+Cada componente usa un eigenvector y su eigenvalue indica la varianza que explica.
+
+$$CP_j=v_{1j}Z_1+v_{2j}Z_2+\cdots+v_{pj}Z_p$$
+
+$$Prop_j=\frac{\lambda_j}{\sum_k\lambda_k}, \qquad Acum_j=\sum_{k=1}^j Prop_k$$
+
+``` r
+eig <- eigen(M)
+lambda <- eig$values
+V <- eig$vectors
+
+prop <- lambda / sum(lambda)
+acum <- cumsum(prop)
+
+data.frame(CP = 1:length(lambda),
+           Eigenvalue = lambda,
+           Varianza = 100*prop,
+           Acumulada = 100*acum)
+```
+
+Con matriz de correlaciones, $\sum\lambda=p$. Elegir componentes buscando una varianza acumulada suficientemente alta según lo que pida el ejercicio.
+
+## Variables que definen cada componente
+
+Los coeficientes del eigenvector son los pesos de la componente. Comparar su **valor absoluto**.
+
+``` r
+rownames(V) <- colnames(X)
+sort(abs(V[,1]), decreasing = TRUE)   # CP1
+sort(abs(V[,2]), decreasing = TRUE)   # CP2
+```
+
+Mayor `abs(coeficiente)` → mayor influencia. El signo indica dirección; todo el eigenvector puede aparecer con signo invertido sin cambiar el ACP.
+
+## Scores: posición de las observaciones
+
+Para covarianzas, centrar; para correlaciones, estandarizar.
+
+``` r
+X_trabajo <- scale(X, center = TRUE, scale = FALSE) # covarianzas
+X_trabajo <- scale(X)                               # correlaciones
+
+scores <- X_trabajo %*% V
+head(scores[,1:2])
+
+plot(scores[,1], scores[,2],
+     xlab = "CP1", ylab = "CP2", pch = 19)
+abline(h = 0, v = 0, lty = 2)
+```
+
+Puntos cercanos → observaciones con perfiles similares. Puntos alejados → perfiles diferentes.
+
+## `princomp()` directo
+
+``` r
+cp <- princomp(X, cor = TRUE, scores = TRUE)  # TRUE=correlaciones
+summary(cp)
+round(cp$loadings[,1:2], 3)
+head(round(cp$scores[,1:2], 3))
+```
+
+- `summary(cp)`: varianza explicada.
+- `$loadings`: pesos de las variables.
+- `$scores`: posición de observaciones.
+- `cor=FALSE`: usar covarianzas.
+
+## Gráficos con `FactoMineR` + `factoextra`
+
+``` r
+pca <- FactoMineR::PCA(X,
+                       scale.unit = TRUE,
+                       ncp = ncol(X),
+                       graph = FALSE)
+
+factoextra::fviz_screeplot(pca, addlabels = TRUE)
+factoextra::fviz_pca_ind(pca, geom.ind = "point")
+factoextra::fviz_pca_var(pca, repel = TRUE)
+factoextra::fviz_pca_biplot(pca,
+                            geom.ind = "point",
+                            label = "var",
+                            repel = TRUE)
+```
+
+- `scale.unit=TRUE`: correlaciones/variables estandarizadas; `FALSE`: covarianzas.
+- Scree plot: varianza explicada por componente.
+- Individuos: observaciones en el plano de componentes.
+- Variables: dirección y relación de las variables con las componentes.
+- Biplot: individuos + variables.
+
+En un biplot: flechas similares → relación positiva; opuestas → negativa; una observación en dirección de una flecha tiende a tener valor alto en esa variable.
