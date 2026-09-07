@@ -6,399 +6,490 @@ output:
     df_print: paged
 ---
 
-# 0. Base: matrices, datos y visualización
+# 0. Base: matrices y preparación
 
-## Matrices y operaciones
-
-Crear matrices por filas y usar `%*%` para producto matricial.
+## Operaciones con matrices
 
 ``` r
-A <- matrix(c(a11, a12, a13,
-              a21, a22, a23,
-              a31, a32, a33),
-            nrow = 3, byrow = TRUE)
-
-A + B
-4*A + 3*B
-t(A)
-solve(A)
-det(A)
-A %*% B
+A <- matrix(c(a11,a12,a13,a21,a22,a23,a31,a32,a33), nrow=3, byrow=TRUE)
+A + B; 4*A + 3*B; t(A); solve(A); det(A); A %*% B
 ```
 
 $$A_{m\times n}B_{n\times p}=C_{m\times p}, \qquad \det(A)=\det(A^T)$$
 
-## Preparar datos
-
-Usar solo las variables cuantitativas que entren al análisis.
+## Preparar matriz de datos
 
 ``` r
-variables <- c("x1", "x2", "x3")
-X <- as.matrix(datos[, variables])
-n <- nrow(X)
-p <- ncol(X)
+variables <- c("x1","x2","x3")      # sustituir por variables cuantitativas
+X <- as.matrix(datos[, variables]); n <- nrow(X); p <- ncol(X)
+medias <- colMeans(X); Xc <- sweep(X, 2, medias, "-")
+S <- cov(X)                            # covarianza muestral
+R <- cor(X)                            # correlación
 ```
 
-## Medias, centrado y covarianza
+Si piden procedimiento matricial:
 
-Media por columnas:
+$$\bar X=\frac{1}{n}\mathbf1^TX,\qquad S=\frac{1}{n-1}X_c^TX_c$$
 
 ``` r
-medias <- colMeans(X)
+unos <- matrix(1,n,1); mu <- t(unos)%*%X/n
+S_manual <- t(Xc)%*%Xc/(n-1)
 ```
 
-Si piden la media con notación matricial:
-
-$$\boldsymbol{\mu}=\frac{1}{n}\mathbf{1}^TX$$
-
-``` r
-unos <- matrix(1, nrow = n, ncol = 1)
-mu <- (t(unos) %*% X) / n
-```
-
-Centrar datos:
-
-$$X_c=X-\mathbf{1}\boldsymbol{\mu}$$
-
-``` r
-Xc <- sweep(X, 2, colMeans(X), "-")
-```
-
-Covarianza **poblacional**:
-
-$$\Sigma=\frac{1}{n}X_c^TX_c$$
-
-``` r
-Sigma <- t(Xc) %*% Xc / n
-```
-
-Covarianza **muestral**:
-
-$$S=\frac{1}{n-1}X_c^TX_c$$
-
-``` r
-S <- t(Xc) %*% Xc / (n - 1)
-S <- cov(X)      # equivalente directo
-```
-
-## Correlación a partir de la covarianza
+Correlación desde covarianza poblacional:
 
 $$R=D^{-1}\Sigma D^{-1}$$
 
 ``` r
-desv <- sqrt(diag(Sigma))
-D_inv <- diag(1 / desv)
-R <- D_inv %*% Sigma %*% D_inv
+Sigma <- t(Xc)%*%Xc/n
+D_inv <- diag(1/sqrt(diag(Sigma))); R <- D_inv%*%Sigma%*%D_inv
 ```
 
 ## Valores y vectores propios
 
-$$M\mathbf{v}=\lambda\mathbf{v}$$
-
-- `values`: cantidad de variabilidad en cada dirección.
-- `vectors`: direcciones o combinaciones de variables.
-
 ``` r
-eigen_M <- eigen(M)
-eigen_M$values
-eigen_M$vectors
+eig <- eigen(M)                        # M = S o R
+eig$values; eig$vectors
 ```
 
-## Diagrama de dispersión
+# 1. Normalidad univariada
+
+## Descripción y prueba
+
+Normal: sesgo $\approx0$, curtosis $\approx3$. En Shapiro/Jarque-Bera: $p<0.05$ rechaza normalidad.
 
 ``` r
-plot(x, y,
-     main = "Título",
-     xlab = "Variable X",
-     ylab = "Variable Y",
-     pch = 19)
+moments::skewness(x); moments::kurtosis(x)
+shapiro.test(x); moments::jarque.test(x)
+qqnorm(x); qqline(x)
+hist(x, probability=TRUE); lines(density(x))
 ```
 
-`x`, `y`: variables; `pch = 19`: puntos sólidos.
+## Box-Cox
 
-# 1. Normal multivariada
-
-## Probabilidad acumulada bivariada
-
-Para $X\sim N_2(\mu,\Sigma)$ y $P(X_1\le x_1, X_2\le x_2)$:
+Usar con respuesta positiva; elegir $\lambda$ donde la log-verosimilitud sea máxima.
 
 ``` r
-mu <- c(mu1, mu2)
-Sigma <- matrix(c(var1, cov12,
-                  cov12, var2), nrow = 2, byrow = TRUE)
-x <- c(x1, x2)
-
-mnormt::pmnorm(x, mean = mu, varcov = Sigma)
+modelo <- lm(y ~ x, data=datos)
+bc <- MASS::boxcox(modelo, lambda=seq(-2,2,0.01), plotit=TRUE)
+lambda <- bc$x[which.max(bc$y)]
+y_bc <- if(abs(lambda)<1e-8) log(datos$y) else (datos$y^lambda-1)/lambda
+shapiro.test(y_bc)
 ```
 
-## Transformación lineal
+## Yeo-Johnson
 
-Si
-
-$$Y=AX+d, \qquad X\sim N_p(\mu_X,\Sigma_X)$$
-
-entonces
-
-$$\mu_Y=A\mu_X+d, \qquad \Sigma_Y=A\Sigma_XA^T$$
+Permite trabajar con valores cero/negativos; sustituir `x` por la variable.
 
 ``` r
-mu_y <- A %*% mu_x + d
-Sigma_y <- A %*% Sigma_x %*% t(A)
+lambdas <- seq(-2,2,0.001)
+pval <- sapply(lambdas, function(L){
+  z <- bestNormalize::yeojohnson(x, lambda=L, standardize=FALSE)
+  shapiro.test(z)$p.value
+})
+lambda_yj <- lambdas[which.max(pval)]
 ```
 
-Para una combinación escalar $Z=aY+c$:
+# 2. Intervalos de confianza y predicción
 
-$$\mu_Z=a\mu_Y+c, \qquad Var(Z)=a\Sigma_Ya^T$$
+Confianza = media esperada; predicción = una observación individual (más ancho).
 
 ``` r
-a <- matrix(c(a1, a2), nrow = 1)
-mu_z <- a %*% mu_y + constante
-var_z <- a %*% Sigma_y %*% t(a)
+modelo <- lm(y ~ x, data=datos)
+nuevo <- data.frame(x=c(valor1,valor2))                # sustituir valores
+predict(modelo, newdata=nuevo, interval="confidence", level=0.95)
+predict(modelo, newdata=nuevo, interval="prediction", level=0.95)
 ```
 
-## Densidad bivariada: superficie y contornos
-
-Usar para visualizar la forma de la distribución. La altura representa **densidad**, no probabilidad.
+Para bandas:
 
 ``` r
-sd1 <- sqrt(Sigma[1,1])
-sd2 <- sqrt(Sigma[2,2])
-x1 <- seq(mu[1]-4*sd1, mu[1]+4*sd1, length.out=100)
-x2 <- seq(mu[2]-4*sd2, mu[2]+4*sd2, length.out=100)
-
-f <- function(x1, x2) {
-  mnormt::dmnorm(cbind(x1, x2), mean=mu, varcov=Sigma)
-}
-z <- outer(x1, x2, f)
-
-plotly::plot_ly(x=x1, y=x2, z=t(z)) |>
-  plotly::add_surface() |>
-  plotly::layout(scene=list(
-    xaxis=list(title="X1"),
-    yaxis=list(title="X2"),
-    zaxis=list(title="Densidad")))
-
-contour(x1, x2, z, xlab="X1", ylab="X2")
+nuevo_x <- data.frame(x=seq(min(datos$x),max(datos$x),length.out=200))
+IC <- predict(modelo,nuevo_x,interval="confidence")
+IP <- predict(modelo,nuevo_x,interval="prediction")
 ```
 
-## Pruebas de normalidad
+# 3. Normal multivariada
 
-Para Mardia o Henze-Zirkler:
+## Probabilidad bivariada
 
-$$H_0:\text{ normal multivariada}, \qquad H_1:\text{ no normal multivariada}$$
+Para $X\sim N_2(\mu,\Sigma)$ y $P(X_1\le x_1,X_2\le x_2)$:
 
 ``` r
-resultado_mardia <- MVN::mvn(data = M, mvn_test = "mardia")
-resultado_hz <- MVN::mvn(data = M, mvn_test = "hz")
+mu <- c(mu1,mu2)
+Sigma <- matrix(c(var1,cov12,cov12,var2),2,byrow=TRUE)
+mnormt::pmnorm(c(x1,x2), mean=mu, varcov=Sigma)
 ```
 
-Regla con $\alpha=0.05$:
+## Transformaciones y combinaciones lineales
 
-- `p < 0.05` → rechazar $H_0$.
-- `p >= 0.05` → no rechazar $H_0$; **no significa demostrar normalidad**.
-
-Normalidad univariada:
+Si $Y=AX+d$: $\mu_Y=A\mu_X+d$, $\Sigma_Y=A\Sigma_XA^T$.
 
 ``` r
-shapiro.test(M[,1])
-shapiro.test(M[,2])
+mu_y <- A%*%mu_x + d
+Sigma_y <- A%*%Sigma_x%*%t(A)
 ```
 
-Visualizaciones del objeto `MVN`:
+Para $b^TX$ y $c^TX$:
+
+$$E(b^TX)=b^T\mu,\quad Var(b^TX)=b^TSb,\quad Cov(b^TX,c^TX)=b^TSc$$
 
 ``` r
-plot(resultado_hz, type = "persp")
-plot(resultado_hz, type = "contour")
+t(b)%*%medias; t(b)%*%S%*%b; t(b)%*%S%*%c
 ```
 
-`type="persp"`: superficie 3D. `type="contour"`: contornos 2D.
+Covarianza distinta de 0 implica dependencia; en normal multivariada, covarianza 0 implica independencia.
 
-## Distancias de Mahalanobis
+## Mardia / Henze-Zirkler
 
-$$d_i^2=(x_i-\bar{x})^TS^{-1}(x_i-\bar{x})$$
+$H_0$: normal multivariada. $p<0.05$ → rechazar $H_0$.
 
 ``` r
-d2 <- mahalanobis(X, colMeans(X), cov(X))
+mardia <- MVN::mvn(data=M, mvn_test="mardia")
+hz <- MVN::mvn(data=M, mvn_test="hz")
+mardia$multivariate_normality
 ```
 
-### Contorno de probabilidad
+## Mahalanobis y contorno
 
-Una observación está dentro si:
-
-$$d_i^2\leq\chi^2_{p,\,prob}$$
+$$d_i^2=(x_i-\bar x)^TS^{-1}(x_i-\bar x)$$
 
 ``` r
-prob <- 0.50
-limite <- qchisq(prob, df = ncol(X))
-dentro <- d2 <= limite
-sum(dentro)
-mean(dentro)
+d2 <- mahalanobis(X,colMeans(X),cov(X))
+limite <- qchisq(prob,df=ncol(X))       # prob = 0.50, 0.95, etc.
+dentro <- d2 <= limite; sum(dentro); mean(dentro)
 ```
 
-**Importante:** `df = p = ncol(X)` del conjunto que se está analizando.
-
-### Diagrama Chi-cuadrado
-
-Usar para evaluar visualmente normalidad multivariada.
+## Diagrama Chi-cuadrado
 
 ``` r
-n <- nrow(X)
-p <- ncol(X)
-d2_ordenadas <- sort(d2)
-probs <- ((1:n) - 0.5) / n
-chi2 <- qchisq(probs, df = p)
-
-plot(chi2, d2_ordenadas,
-     xlab = "Cuantiles teóricos Chi-cuadrado",
-     ylab = "Mahalanobis ordenadas",
-     pch = 19)
-abline(0, 1)
+n <- nrow(X); p <- ncol(X)
+chi2 <- qchisq(((1:n)-0.5)/n,df=p)
+plot(chi2,sort(d2),xlab="Chi-cuadrado",ylab="Mahalanobis",pch=19)
+abline(0,1)
 ```
 
-Interpretación: puntos aproximadamente sobre la línea → compatible con normalidad multivariada; desviaciones fuertes o curvatura → posible falta de normalidad.
+Puntos aproximadamente lineales → compatible con normalidad multivariada.
 
-# 2. Combinaciones lineales y dependencia
-
-## Combinaciones lineales
-
-Para vectores $b$ y $c$:
-
-$$E(b^TX)=b^T\mu$$
-
-$$Var(b^TX)=b^TSb, \qquad Var(c^TX)=c^TSc$$
-
-$$Cov(b^TX,c^TX)=b^TSc$$
+## Varianza generalizada / singularidad
 
 ``` r
-bX <- X %*% b
-cX <- X %*% c
-
-t(b) %*% medias
-t(c) %*% medias
-
-t(b) %*% S %*% b
-t(c) %*% S %*% c
-t(b) %*% S %*% c
+e <- eigen(S); det(S); e$values; prod(e$values)
 ```
 
-Si la covarianza es distinta de 0, no son independientes. En una normal multivariada, covarianza 0 sí implica independencia.
+$|S|\approx0$ y valor propio $\approx0$ → posible dependencia lineal.
 
-## Varianza generalizada y singularidad
+# 4. Componentes principales (PCA)
+
+## Elegir matriz
+
+Covarianzas si escalas comparables; correlaciones si unidades/escalas distintas.
 
 ``` r
-eigen_S <- eigen(S)
-det(S)
-eigen_S$values
-eigen_S$vectors
-prod(eigen_S$values)
+S <- cov(X); R <- cor(X); M <- R        # cambiar por S cuando corresponda
+eig <- eigen(M); lambda <- eig$values; V <- eig$vectors
+prop <- lambda/sum(lambda); acum <- cumsum(prop)
+data.frame(CP=1:length(lambda),Eigenvalue=lambda,Var=100*prop,Acum=100*acum)
 ```
 
-Si $|S|\approx0$ y un valor propio es cercano a 0, existe una dirección con varianza casi nula y puede haber dependencia lineal.
+Con correlaciones, $\sum\lambda=p$. Kaiser: conservar principalmente $\lambda>1$; complementar con scree y varianza acumulada.
 
-# 3. Componentes principales (PCA)
-
-## Idea y elección de matriz
-
-PCA reemplaza variables correlacionadas por componentes no correlacionadas, ordenadas de mayor a menor varianza.
-
-- **Covarianzas (`S`)**: usar si las variables tienen unidades y escalas comparables.
-- **Correlaciones (`R`)**: usar si las escalas son muy distintas; equivale a estandarizar.
-
-``` r
-S <- cov(X)
-R <- cor(X)
-M <- R          # cambiar por S si corresponde
-```
-
-## Valores propios y varianza explicada
-
-Cada componente usa un eigenvector y su eigenvalue indica la varianza que explica.
-
-$$CP_j=v_{1j}Z_1+v_{2j}Z_2+\cdots+v_{pj}Z_p$$
-
-$$Prop_j=\frac{\lambda_j}{\sum_k\lambda_k}, \qquad Acum_j=\sum_{k=1}^j Prop_k$$
-
-``` r
-eig <- eigen(M)
-lambda <- eig$values
-V <- eig$vectors
-
-prop <- lambda / sum(lambda)
-acum <- cumsum(prop)
-
-data.frame(CP = 1:length(lambda),
-           Eigenvalue = lambda,
-           Varianza = 100*prop,
-           Acumulada = 100*acum)
-```
-
-Con matriz de correlaciones, $\sum\lambda=p$. Elegir componentes buscando una varianza acumulada suficientemente alta según lo que pida el ejercicio.
-
-## Variables que definen cada componente
-
-Los coeficientes del eigenvector son los pesos de la componente. Comparar su **valor absoluto**.
+## Variables importantes y scores
 
 ``` r
 rownames(V) <- colnames(X)
-sort(abs(V[,1]), decreasing = TRUE)   # CP1
-sort(abs(V[,2]), decreasing = TRUE)   # CP2
+sort(abs(V[,1]),decreasing=TRUE)         # variables que dominan CP1
+Xtrab <- scale(X)                        # correlaciones; para S usar scale(X,scale=FALSE)
+scores <- Xtrab%*%V
+plot(scores[,1],scores[,2],xlab="CP1",ylab="CP2",pch=19)
 ```
 
-Mayor `abs(coeficiente)` → mayor influencia. El signo indica dirección; todo el eigenvector puede aparecer con signo invertido sin cambiar el ACP.
+Mayor $|coeficiente|$ → mayor influencia. El signo completo de un eigenvector puede invertirse sin cambiar PCA.
 
-## Scores: posición de las observaciones
-
-Para covarianzas, centrar; para correlaciones, estandarizar.
+## PCA directo y gráficos
 
 ``` r
-X_trabajo <- scale(X, center = TRUE, scale = FALSE) # covarianzas
-X_trabajo <- scale(X)                               # correlaciones
+cp <- princomp(X,cor=TRUE,scores=TRUE)   # cor=FALSE para covarianzas
+summary(cp); round(cp$loadings[,1:2],3); head(cp$scores[,1:2])
 
-scores <- X_trabajo %*% V
-head(scores[,1:2])
-
-plot(scores[,1], scores[,2],
-     xlab = "CP1", ylab = "CP2", pch = 19)
-abline(h = 0, v = 0, lty = 2)
+pca <- FactoMineR::PCA(X,scale.unit=TRUE,ncp=ncol(X),graph=FALSE)
+factoextra::fviz_screeplot(pca,addlabels=TRUE)
+factoextra::fviz_pca_ind(pca,geom.ind="point")
+factoextra::fviz_pca_var(pca,repel=TRUE)
+factoextra::fviz_pca_biplot(pca,geom.ind="point",label="var",repel=TRUE)
 ```
 
-Puntos cercanos → observaciones con perfiles similares. Puntos alejados → perfiles diferentes.
+Biplot: flechas similares = correlación positiva; opuestas = negativa; puntos cercanos = observaciones similares.
 
-## `princomp()` directo
+# 5. Análisis factorial (Módulo 1)
+
+Busca factores latentes que expliquen las correlaciones entre variables.
+
+## Correlaciones, Bartlett y KMO
 
 ``` r
-cp <- princomp(X, cor = TRUE, scores = TRUE)  # TRUE=correlaciones
-summary(cp)
-round(cp$loadings[,1:2], 3)
-head(round(cp$scores[,1:2], 3))
+Corr <- psych::corr.test(M,adjust="none"); R <- Corr$r; Corr$p
+psych::cortest.bartlett(R,n=nrow(M))    # H0: R=I; p<0.05 favorece FA
+K <- psych::KMO(R); K$MSA; K$MSAi      # KMO global e individual
 ```
 
-- `summary(cp)`: varianza explicada.
-- `$loadings`: pesos de las variables.
-- `$scores`: posición de observaciones.
-- `cor=FALSE`: usar covarianzas.
+KMO: <0.50 inadecuado; 0.60–0.69 mediocre; 0.70–0.79 aceptable; 0.80–0.89 meritorio; >=0.90 excelente.
 
-## Gráficos con `FactoMineR` + `factoextra`
+## Número de factores
 
 ``` r
-pca <- FactoMineR::PCA(X,
-                       scale.unit = TRUE,
-                       ncp = ncol(X),
-                       graph = FALSE)
-
-factoextra::fviz_screeplot(pca, addlabels = TRUE)
-factoextra::fviz_pca_ind(pca, geom.ind = "point")
-factoextra::fviz_pca_var(pca, repel = TRUE)
-factoextra::fviz_pca_biplot(pca,
-                            geom.ind = "point",
-                            label = "var",
-                            repel = TRUE)
+psych::scree(M,factors=TRUE,pc=FALSE)
+psych::fa.parallel(M,fa="fa",fm="ml",n.iter=100)
+psych::fa.parallel(M,fa="fa",fm="minres",n.iter=100)
 ```
 
-- `scale.unit=TRUE`: correlaciones/variables estandarizadas; `FALSE`: covarianzas.
-- Scree plot: varianza explicada por componente.
-- Individuos: observaciones en el plano de componentes.
-- Variables: dirección y relación de las variables con las componentes.
-- Biplot: individuos + variables.
+Conservar el número sugerido por scree/análisis paralelo según el ejercicio.
 
-En un biplot: flechas similares → relación positiva; opuestas → negativa; una observación en dirección de una flecha tiende a tener valor alto en esa variable.
+## Ajustar y rotar
+
+``` r
+nf <- 2                                   # sustituir número de factores
+fa_ml <- psych::fa(M,nfactors=nf,rotate="varimax",fm="ml")
+fa_min <- psych::fa(M,nfactors=nf,rotate="varimax",fm="minres")
+print(fa_ml$loadings,cutoff=0.30,sort=TRUE)
+fa_ml$communality; fa_ml$uniquenesses; fa_ml$Vaccounted
+psych::fa.diagram(fa_ml)
+```
+
+Para Quartimax cambiar `rotate="quartimax"`. Carga alta = variable asociada al factor; comunalidad alta = variable bien explicada; unicidad $=1-h^2$.
+
+# 6. Clustering jerárquico (Módulo 1)
+
+## Desde datos o matriz de distancias
+
+Estandarizar cuando las variables tengan escalas distintas.
+
+``` r
+Xz <- scale(X); d <- dist(Xz)             # si ya dan matriz M: d <- as.dist(M)
+J_avg <- hclust(d,method="average")       # distancia promedio
+J_single <- hclust(d,method="single")    # vecino más cercano
+plot(J_avg,hang=-1); plot(J_single,hang=-1)
+```
+
+Single: distancia mínima entre dos conglomerados. Average: promedio de todas las distancias entre ambos grupos.
+
+## Obtener grupos
+
+``` r
+grupo <- cutree(J_avg,k=2)                # sustituir k
+table(grupo)
+```
+
+# 7. Clustering no jerárquico: K-means (Módulo 1)
+
+K-means agrupa observaciones; no predice una variable. Estandarizar si hay escalas diferentes.
+
+``` r
+M1 <- na.omit(M); Mz <- scale(M1)
+set.seed(123)
+factoextra::fviz_nbclust(Mz,kmeans,method="wss",k.max=8)        # codo
+factoextra::fviz_nbclust(Mz,kmeans,method="silhouette",k.max=8) # silueta
+```
+
+Mayor silueta = mejor separación. Elegir `k` usando codo + silueta.
+
+``` r
+k <- 2                                      # sustituir k elegido
+km <- kmeans(Mz,centers=k,nstart=25)
+km$centers; table(km$cluster)
+factoextra::fviz_cluster(km,data=Mz,show.clust.cent=TRUE)
+aggregate(M1,by=list(Cluster=km$cluster),FUN=mean) # interpretar en escala original
+```
+
+# 8. Regresión lineal (Módulo 2)
+
+## Ajuste y mínimos cuadrados
+
+$$Y=X\beta+\varepsilon,\qquad \hat\beta=(X^TX)^{-1}X^TY$$
+
+``` r
+modelo <- lm(y ~ x1 + x2 + x3,data=datos)  # sustituir respuesta/predictores
+summary(modelo); coef(modelo)
+```
+
+Procedimiento matricial si lo piden:
+
+``` r
+Y <- as.matrix(datos$y); X <- cbind(1,datos$x1,datos$x2,datos$x3)
+beta_hat <- solve(t(X)%*%X)%*%t(X)%*%Y
+Y_hat <- X%*%beta_hat; residuos <- Y-Y_hat; SSE <- sum(residuos^2)
+```
+
+En `summary`: $R^2$ = variación explicada; $R^2_{aj}$ penaliza predictores; F global prueba si al menos un predictor aporta; p individual prueba $H_0:\beta_i=0$.
+
+``` r
+summary(modelo)$r.squared; summary(modelo)$adj.r.squared
+coef(summary(modelo))
+F <- summary(modelo)$fstatistic
+pf(F[1],F[2],F[3],lower.tail=FALSE)        # p de prueba F global
+```
+
+## Selección AIC/BIC
+
+``` r
+modelo_AIC <- step(modelo,direction="both",trace=0)
+modelo_BIC <- step(modelo,direction="both",trace=0,k=log(nrow(datos)))
+formula(modelo_AIC); formula(modelo_BIC)
+AIC(modelo); BIC(modelo)
+```
+
+Menor AIC/BIC favorece el modelo, comparando modelos ajustados sobre las mismas observaciones.
+
+## Multicolinealidad
+
+$$VIF_j=\frac{1}{1-R_j^2}$$
+
+``` r
+aux <- lm(x1 ~ x2 + x3,data=datos)          # repetir cambiando predictor respuesta
+VIF_x1 <- 1/(1-summary(aux)$r.squared)
+```
+
+VIF < 5: sin problema importante según el criterio usado en las actividades.
+
+## Validación de residuos
+
+``` r
+res <- residuals(modelo); fit <- fitted(modelo)
+shapiro.test(res)                           # H0: normalidad
+plot(fit,res); abline(h=0)                  # homocedasticidad: sin patrón/abanico
+plot(res,type="b"); abline(h=0)            # independencia visual
+DW <- sum(diff(res)^2)/sum(res^2)           # cerca de 2 = sin señal fuerte de autocorrelación
+par(mfrow=c(2,2)); plot(modelo); par(mfrow=c(1,1))
+```
+
+Breusch-Pagan manual usado en la actividad:
+
+``` r
+e2 <- res^2; bp <- lm(e2 ~ x1 + x2 + x3,data=datos)
+LM <- nrow(datos)*summary(bp)$r.squared
+p_BP <- pchisq(LM,df=3,lower.tail=FALSE)    # p<0.05 indica heterocedasticidad
+```
+
+## Atípicos e influyentes
+
+``` r
+rs <- rstandard(modelo); rt <- rstudent(modelo)
+which(abs(rs)>2); which(abs(rt)>3)
+
+hat <- hatvalues(modelo); lim_hat <- 2*length(coef(modelo))/nrow(datos)
+which(hat>lim_hat)
+
+cook <- cooks.distance(modelo); lim_cook <- 4/nrow(datos)
+which(cook>lim_cook)
+car::influencePlot(modelo,id=TRUE)
+```
+
+Residuo grande = atípico en $Y$; leverage alto = predictor extremo; Cook alto = observación con influencia sobre el modelo. Revisar antes de eliminar.
+
+# 9. Análisis discriminante lineal - LDA (Módulo 2)
+
+Respuesta categórica; LDA construye combinaciones lineales para separar grupos.
+
+## Ajustar modelo
+
+``` r
+datos$grupo <- factor(datos$grupo)          # respuesta categórica
+pred <- c("x1","x2","x3")
+form <- as.formula(paste("grupo ~",paste(pred,collapse=" + ")))
+modelo_lda <- MASS::lda(form,data=datos)
+modelo_lda$prior; modelo_lda$means; modelo_lda$scaling
+```
+
+Máximo número de funciones discriminantes: $\min(p,g-1)$.
+
+## Predicción y funciones discriminantes
+
+``` r
+pred_lda <- predict(modelo_lda,newdata=datos)
+pred_lda$class                              # clase predicha
+head(pred_lda$x)                            # scores LD1, LD2, ...
+```
+
+Coeficientes mayores en valor absoluto aportan más a cada LD; el signo indica dirección.
+
+## LOOCV y matriz de confusión
+
+``` r
+cv <- MASS::lda(form,data=datos,CV=TRUE)
+tabla <- table(Real=datos$grupo,Predicha=cv$class)
+tabla
+precision <- sum(diag(tabla))/sum(tabla); error <- 1-precision
+acierto_clase <- diag(tabla)/rowSums(tabla)
+```
+
+Diagonal = clasificaciones correctas. Revisar precisión global y por clase si hay desbalance.
+
+## Supuestos de LDA
+
+Normalidad multivariada dentro de cada grupo e igualdad de matrices de covarianzas.
+
+``` r
+for(g in levels(datos$grupo)){
+  Xg <- datos[datos$grupo==g,pred]
+  print(MVN::mvn(Xg,mvn_test="mardia")$multivariate_normality)
+}
+biotools::boxM(datos[,pred],datos$grupo)    # H0: matrices de covarianza iguales
+```
+
+En ambas pruebas, $p<0.05$ implica que el supuesto correspondiente no se cumple.
+
+# 10. Regresión logística (Módulo 2)
+
+Respuesta binaria; modela $p=P(Y=1)$ mediante el logit.
+
+$$\log\left(\frac{p}{1-p}\right)=\beta_0+\beta_1X_1+\cdots+\beta_pX_p$$
+
+## Ajustar e interpretar
+
+``` r
+modelo_log <- glm(y ~ x1 + x2,data=datos,family=binomial)
+summary(modelo_log)
+coef(modelo_log); exp(coef(modelo_log))     # odds ratios
+```
+
+$e^{\beta_j}$ = factor multiplicativo de los odds por una unidad adicional de $X_j$, manteniendo las demás constantes.
+
+## Probabilidades y clasificación
+
+``` r
+prob <- predict(modelo_log,newdata=prueba,type="response")
+pred <- ifelse(prob>0.5,"1","0")          # adaptar etiquetas/umbral
+pred <- factor(pred,levels=levels(prueba$y))
+tabla <- table(Real=prueba$y,Predicho=pred)
+tabla
+```
+
+## Métricas binarias
+
+Adaptar cuál categoría es la positiva.
+
+``` r
+exactitud <- sum(diag(tabla))/sum(tabla); error <- 1-exactitud
+sensibilidad <- tabla["1","1"]/sum(tabla["1",])
+especificidad <- tabla["0","0"]/sum(tabla["0",])
+c(Exactitud=exactitud,Error=error,Sensibilidad=sensibilidad,Especificidad=especificidad)
+```
+
+## Significancia global y validación
+
+``` r
+nulo <- glm(y ~ 1,data=datos,family=binomial)
+anova(nulo,modelo_log,test="Chisq")         # p<0.05: predictores mejoran al nulo
+
+res <- residuals(modelo_log,type="deviance")
+plot(seq_along(res),res); abline(h=0,lty=2) # revisar independencia/patrones
+```
+
+Linealidad del predictor continuo con el logit (Box-Tidwell; requiere valores positivos):
+
+``` r
+datos$x1_pos <- datos$x1-min(datos$x1)+0.001
+car::boxTidwell(y_num ~ x1_pos,data=datos)  # p<0.05 sugiere falta de linealidad
+```
+
+Con un solo predictor no puede haber multicolinealidad entre predictores; con varios, revisar VIF como en regresión lineal.
