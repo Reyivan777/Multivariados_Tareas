@@ -285,8 +285,6 @@ Si la covarianza es distinta de 0, no son independientes. En una normal multivar
 
 ## Varianza generalizada y singularidad
 
-$$GV=|S|=\prod_{j=1}^{p}\lambda_j$$
-
 ``` r
 eigen_S <- eigen(S)
 det(S)
@@ -296,22 +294,3 @@ prod(eigen_S$values)
 ```
 
 Si $|S|\approx0$ y un valor propio es cercano a 0, existe una dirección con varianza casi nula y puede haber dependencia lineal.
-
-## Verificar relación lineal con el eigenvector de valor propio 0
-
-Tomar el eigenvector asociado al eigenvalue de menor magnitud:
-
-``` r
-i0 <- which.min(abs(eigen_S$values))
-v0 <- eigen_S$vectors[, i0]
-
-eigen_S$values[i0]
-v0
-
-Xc %*% v0
-X %*% v0
-```
-
-- `Xc %*% v0` → valores cercanos a 0.
-- `X %*% v0` → aproximadamente una constante.
-- El eigenvector puede aparecer escalado o con signo contrario y representa la misma relación.
