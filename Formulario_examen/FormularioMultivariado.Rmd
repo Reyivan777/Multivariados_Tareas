@@ -312,6 +312,24 @@ prod(eigen_S$values)
 
 Si $|S|\approx0$ y aparece un valor propio cercano a cero, $S$ es singular y existe dependencia lineal entre las variables.
 
+## Verificar relación lineal con el eigenvector de valor propio cero
+
+Si un valor propio es cercano a cero, tomar su eigenvector asociado. Ese vector contiene los coeficientes de una combinación lineal con varianza aproximadamente cero.
+
+``` r
+eigen_S <- eigen(S)
+i0 <- which.min(abs(eigen_S$values))
+v0 <- eigen_S$vectors[, i0]
+
+eigen_S$values[i0]
+v0
+
+Xc %*% v0
+X %*% v0
+```
+
+`Xc %*% v0` debe producir valores cercanos a cero. `X %*% v0` debe producir aproximadamente una constante. El eigenvector puede aparecer escalado o con signo contrario y sigue representando la misma relación.
+
 ## Prueba de Henze-Zirkler
 
 Hipótesis:
@@ -326,6 +344,44 @@ resultado_hz
 ```
 
 Con $\alpha=0.05$: si `p.value < 0.05`, rechazar $H_0$.
+
+## Visualizaciones rápidas
+
+### Diagrama de dispersión
+
+Usar cuando se quiera ver la relación entre dos variables numéricas.
+
+``` r
+plot(x, y,
+     main = "Título",
+     xlab = "Variable X",
+     ylab = "Variable Y",
+     pch = 19)
+```
+
+Argumentos principales:
+
+- `x`: variable del eje horizontal.
+- `y`: variable del eje vertical.
+- `main`: título del gráfico.
+- `xlab`: nombre mostrado en el eje X.
+- `ylab`: nombre mostrado en el eje Y.
+- `pch = 19`: usa puntos sólidos.
+
+### Visualizaciones de un resultado `MVN`
+
+Primero debe existir un objeto generado por `MVN::mvn()`, por ejemplo `resultado_hz`.
+
+``` r
+plot(resultado_hz, type = "persp")
+plot(resultado_hz, type = "contour")
+```
+
+Argumentos:
+
+- `resultado_hz`: objeto devuelto por `MVN::mvn()`.
+- `type = "persp"`: muestra una superficie tridimensional de densidad.
+- `type = "contour"`: muestra curvas de nivel o contornos en dos dimensiones.
 
 ## Contorno de probabilidad con Mahalanobis
 
