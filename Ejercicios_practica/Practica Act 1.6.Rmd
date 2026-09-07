@@ -19,15 +19,13 @@ Resuelve esta práctica usando principalmente `Formulario_examen/FormularioMulti
 
 Considera la matriz de datos
 
-$$
-X=\begin{pmatrix}
+$$X=\begin{pmatrix}
 1 & 3 & 7\\
 2 & 1 & 4\\
 4 & 2 & 8\\
 5 & 4 & 13\\
 7 & 0 & 7
-\end{pmatrix}.
-$$
+\end{pmatrix}.$$
 
 Cada fila es una observación y cada columna una variable.
 
@@ -35,24 +33,35 @@ Cada fila es una observación y cada columna una variable.
 
 ```{r}
 # Escribe tu código aquí
+A <- matrix(c(1, 3, 7,
+              2, 1, 4,
+              4, 2, 8,
+              5, 4, 13,
+              7, 0, 7),
+            nrow = 3, byrow = TRUE)
 ```
 
 ## b) Calcular la matriz de covarianzas muestral con `cov()` (5 puntos)
 
 ```{r}
 # Escribe tu código aquí
+cov(A)
 ```
 
 ## c) Centrar los datos y comprobar manualmente que
 
-$$
-S=\frac{1}{n-1}X_c^TX_c
-$$
+$$S=\frac{1}{n-1}X_c^TX_c$$
 
 (10 puntos)
 
 ```{r}
 # Escribe tu código aquí
+n <- nrow(A)
+unos <- matrix(1, nrow = n, ncol = 1)
+mu <- (t(unos) %*% A) / n
+
+Sigma <- t(A - unos %*% mu) %*% (A - unos %*% mu) / (n - 1)
+Sigma
 ```
 
 # Problema 2 - Combinaciones lineales (25 puntos)
@@ -69,6 +78,15 @@ $$c=(2,-1,1)^T.$$
 
 ```{r}
 # Escribe tu código aquí
+b <- t(matrix(c(1, 1, 1),
+            nrow = 1, byrow = TRUE))
+
+c <- t(matrix(c(2, -1, 1),
+              nrow = 1, byrow = TRUE))
+
+# ¿Como calculo bx y cx si aun no tengo X
+bX <- X %*% b
+cX <- X %*% c
 ```
 
 ## b) Calcular las medias de ambas combinaciones mediante las fórmulas matriciales (5 puntos)
@@ -81,12 +99,12 @@ $$E(c^TX)=c^T\bar X$$
 
 ```{r}
 # Escribe tu código aquí
+
 ```
 
 ## c) Calcular
 
-$$Var(b^TX),\qquad Var(c^TX),\qquad Cov(b^TX,c^TX)
-$$
+$$Var(b^TX),\qquad Var(c^TX),\qquad Cov(b^TX,c^TX)$$
 
 mediante fórmulas matriciales (10 puntos)
 
@@ -200,9 +218,7 @@ Interpreta el signo de la covarianza:
 
 Usa:
 
-$$
-d_i^2\leq\chi^2_{2,0.50}
-$$
+$$d_i^2\leq\chi^2_{2,0.50}$$
 
 Calcula también la proporción de observaciones dentro.
 
@@ -222,7 +238,7 @@ Escribe tu respuesta aquí:
 
 # Entrega
 
-1. Haz Knit a HTML.
-2. Guarda el `.Rmd` y el `.html`.
-3. Súbelos al repositorio.
-4. Avísame para revisar código, resultados e interpretación sobre 100 puntos.
+1.  Haz Knit a HTML.
+2.  Guarda el `.Rmd` y el `.html`.
+3.  Súbelos al repositorio.
+4.  Avísame para revisar código, resultados e interpretación sobre 100 puntos.

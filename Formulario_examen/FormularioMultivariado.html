@@ -1821,6 +1821,77 @@ shapiro.test(M[,2])</code></pre>
 variable.</p>
 </div>
 </div>
+<div id="combinaciones-lineales-y-validación" class="section level1">
+<h1>2. Combinaciones lineales y validación</h1>
+<div id="matriz-de-covarianzas-muestral" class="section level2">
+<h2>Matriz de covarianzas muestral</h2>
+<p>Para datos muestrales usar <span class="math inline">\(n-1\)</span>:</p>
+<p><span class="math display">\[S=\frac{1}{n-1}X_c^TX_c\]</span></p>
+<pre class="r"><code>medias &lt;- colMeans(X)
+Xc &lt;- sweep(X, 2, medias, &quot;-&quot;)
+n &lt;- nrow(X)
+S &lt;- t(Xc) %*% Xc / (n - 1)</code></pre>
+<p>Equivalente directo:</p>
+<pre class="r"><code>S &lt;- cov(X)</code></pre>
+</div>
+<div id="combinaciones-lineales" class="section level2">
+<h2>Combinaciones lineales</h2>
+<p>Para <span class="math inline">\(b^TX\)</span> y <span class="math inline">\(c^TX\)</span>:</p>
+<p><span class="math display">\[E(b^TX)=b^T\mu\]</span></p>
+<p><span class="math display">\[Var(b^TX)=b^TSb\]</span></p>
+<p><span class="math display">\[Var(c^TX)=c^TSc\]</span></p>
+<p><span class="math display">\[Cov(b^TX,c^TX)=b^TSc\]</span></p>
+<pre class="r"><code>bX &lt;- X %*% b
+cX &lt;- X %*% c
+
+t(b) %*% medias
+t(c) %*% medias
+
+t(b) %*% S %*% b
+t(c) %*% S %*% c
+t(b) %*% S %*% c</code></pre>
+<p>Si la covarianza es distinta de cero, las combinaciones no son
+independientes. Si provienen de una normal multivariada, covarianza cero
+implica independencia.</p>
+</div>
+<div id="varianza-generalizada-y-singularidad" class="section level2">
+<h2>Varianza generalizada y singularidad</h2>
+<p>La varianza generalizada es:</p>
+<p><span class="math display">\[GV=|S|\]</span></p>
+<p>También:</p>
+<p><span class="math display">\[|S|=\prod_{j=1}^{p}\lambda_j\]</span></p>
+<pre class="r"><code>det(S)
+eigen_S &lt;- eigen(S)
+eigen_S$values
+eigen_S$vectors
+prod(eigen_S$values)</code></pre>
+<p>Si <span class="math inline">\(|S|\approx0\)</span> y aparece un
+valor propio cercano a cero, <span class="math inline">\(S\)</span> es
+singular y existe dependencia lineal entre las variables.</p>
+</div>
+<div id="prueba-de-henze-zirkler" class="section level2">
+<h2>Prueba de Henze-Zirkler</h2>
+<p>Hipótesis:</p>
+<p><span class="math display">\[H_0:\text{ los datos siguen una
+distribución normal multivariada}\]</span></p>
+<p><span class="math display">\[H_1:\text{ los datos no siguen una
+distribución normal multivariada}\]</span></p>
+<pre class="r"><code>resultado_hz &lt;- MVN::mvn(data = M, mvn_test = &quot;hz&quot;)
+resultado_hz</code></pre>
+<p>Con <span class="math inline">\(\alpha=0.05\)</span>: si
+<code>p.value &lt; 0.05</code>, rechazar <span class="math inline">\(H_0\)</span>.</p>
+</div>
+<div id="contorno-de-probabilidad-con-mahalanobis" class="section level2">
+<h2>Contorno de probabilidad con Mahalanobis</h2>
+<p>Para un contorno de probabilidad <code>prob</code> en <span class="math inline">\(p\)</span> dimensiones:</p>
+<p><span class="math display">\[d_i^2\leq\chi^2_{p,\,prob}\]</span></p>
+<pre class="r"><code>d2 &lt;- mahalanobis(X, colMeans(X), cov(X))
+limite &lt;- qchisq(prob, df = ncol(X))
+dentro &lt;- d2 &lt;= limite
+sum(dentro)
+mean(dentro)</code></pre>
+</div>
+</div>
 
 
 
