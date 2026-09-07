@@ -279,8 +279,8 @@ $$Var(c^TX)=c^TSc$$
 $$Cov(b^TX,c^TX)=b^TSc$$
 
 ``` r
-bX <- X %*% b 
-cX <- X %*% c
+bX <- X %*% b # bX
+cX <- X %*% c # cX
 
 t(b) %*% medias # Valor esperado
 t(c) %*% medias # Valor esperado

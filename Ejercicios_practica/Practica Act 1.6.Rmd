@@ -97,8 +97,8 @@ $$E(c^TX)=c^T\bar X$$
 
 ```{r}
 # Escribe tu código aquí
-
-
+t(b) %*% medias 
+t(c) %*% medias 
 ```
 
 ## c) Calcular
@@ -109,11 +109,14 @@ mediante fórmulas matriciales (10 puntos)
 
 ```{r}
 # Escribe tu código aquí
+t(b) %*% S %*% b 
+t(c) %*% S %*% c 
+t(b) %*% S %*% c 
 ```
 
 ## d) Interpretar la covarianza entre ambas combinaciones (5 puntos)
 
-Escribe tu respuesta aquí:
+Escribe tu respuesta aquí: la covarianza es de 27 lo que indica que las variables estan correlacionadas y no son independientes
 
 # Problema 3 - Determinante, valores propios y dependencia lineal (20 puntos)
 
@@ -123,17 +126,22 @@ Usa la matriz de covarianzas `S` del Problema 1.
 
 ```{r}
 # Escribe tu código aquí
+det(S)
 ```
 
 ## b) Obtener valores y vectores propios de `S` (5 puntos)
 
 ```{r}
 # Escribe tu código aquí
+eigen_S <- eigen(S)
+eigen_S$values
+eigen_S$vectors
+prod(eigen_S$values)
 ```
 
 ## c) Revisar si existe un valor propio cercano a cero e interpretar qué significa (4 puntos)
 
-Escribe tu respuesta aquí:
+Escribe tu respuesta aquí: El tercer valor propio esta muy cercano a 0, lo que indica que la matriz no se agranda ni se achica por lo que es una fuerte señal de que aunque los datos estan en R\^3 realemente se podrían representar en R\^2
 
 ## d) Verificar en los datos la relación lineal
 
@@ -143,6 +151,7 @@ para todas las observaciones (3 puntos)
 
 ```{r}
 # Escribe tu código aquí
+
 ```
 
 ## e) Comprobar que el producto de los valores propios coincide aproximadamente con `det(S)` (3 puntos)
