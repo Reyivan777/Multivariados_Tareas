@@ -33,19 +33,19 @@ Cada fila es una observación y cada columna una variable.
 
 ```{r}
 # Escribe tu código aquí
-A <- matrix(c(1, 3, 7,
+X <- matrix(c(1, 3, 7,
               2, 1, 4,
               4, 2, 8,
               5, 4, 13,
               7, 0, 7),
-            nrow = 3, byrow = TRUE)
+            nrow = 5, byrow = TRUE)
 ```
 
 ## b) Calcular la matriz de covarianzas muestral con `cov()` (5 puntos)
 
 ```{r}
 # Escribe tu código aquí
-cov(A)
+cov(X)
 ```
 
 ## c) Centrar los datos y comprobar manualmente que
@@ -56,12 +56,11 @@ $$S=\frac{1}{n-1}X_c^TX_c$$
 
 ```{r}
 # Escribe tu código aquí
-n <- nrow(A)
-unos <- matrix(1, nrow = n, ncol = 1)
-mu <- (t(unos) %*% A) / n
-
-Sigma <- t(A - unos %*% mu) %*% (A - unos %*% mu) / (n - 1)
-Sigma
+medias <- colMeans(X)
+Xc <- sweep(X, 2, medias, "-")
+n <- nrow(X)
+S <- t(Xc) %*% Xc / (n - 1)
+S
 ```
 
 # Problema 2 - Combinaciones lineales (25 puntos)
@@ -84,7 +83,6 @@ b <- t(matrix(c(1, 1, 1),
 c <- t(matrix(c(2, -1, 1),
               nrow = 1, byrow = TRUE))
 
-# ¿Como calculo bx y cx si aun no tengo X
 bX <- X %*% b
 cX <- X %*% c
 ```
@@ -99,6 +97,7 @@ $$E(c^TX)=c^T\bar X$$
 
 ```{r}
 # Escribe tu código aquí
+
 
 ```
 
