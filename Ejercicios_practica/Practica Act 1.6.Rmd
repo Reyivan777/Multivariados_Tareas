@@ -258,11 +258,25 @@ mean(dentro)
 
 ```{r}
 # Escribe tu código aquí
+n <- nrow(Autos)
+p <- ncol(Autos)
+
+d2_ordenadas <- sort(d2)
+probabilidades <- ((1:n) - 0.5) / n
+chi2 <- qchisq(probabilidades, df = p)
+
+plot(chi2, d2_ordenadas,
+     main = "Diagrama Chi-cuadrado",
+     xlab = "Cuantiles teóricos Chi-cuadrado",
+     ylab = "Distancias de Mahalanobis ordenadas",
+     pch = 19)
+
+abline(0, 1)
 ```
 
 ## e) Interpretar si los datos parecen aproximadamente compatibles con normalidad bivariada (2 puntos)
 
-Escribe tu respuesta aquí:
+Escribe tu respuesta aquí: Los puntos se desvian un poco cuando los cuantiles son más elevados, sin embargo parece que si hay una normalidad bivariada
 
 # Entrega
 
