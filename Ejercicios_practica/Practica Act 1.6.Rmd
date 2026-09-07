@@ -158,6 +158,9 @@ para todas las observaciones (3 puntos)
 
 ```{r}
 # Escribe tu código aquí
+1.308008e+01 * 5.819917e+00 * 1.421085e-14
+det(S)
+
 ```
 
 # Problema 4 - Prueba de Henze-Zirkler (15 puntos)
@@ -177,16 +180,18 @@ M
 
 ```{r}
 # Escribe tu código aquí
+resultado_hz <- MVN::mvn(data = M, mvn_test = "hz")
+resultado_hz
 ```
 
 ## b) Con $\alpha=0.05$, interpretar la prueba (5 puntos)
 
 Indica claramente:
 
-- $H_0$
-- $H_1$
-- decisión usando el p-value
-- conclusión
+- $H_0$ Los datos siguen una distribución normal multivariada
+- $H_1$ Los datos no siguen una distribución normal multivariada
+- decisión usando el p-value La distribución es normal multivariada
+- conclusión Todo es normal multivariado y univariado
 
 Escribe tu respuesta aquí:
 
@@ -194,6 +199,7 @@ Escribe tu respuesta aquí:
 
 ```{r}
 # Escribe tu código aquí
+plot(resultado_hz, type = "persp")
 ```
 
 # Problema 5 - Mahalanobis y contorno de probabilidad (20 puntos)
@@ -212,14 +218,24 @@ Autos
 
 ```{r}
 # Escribe tu código aquí
+plot(edad, precio,
+     main = "Título",
+     xlab = "Variable X",
+     ylab = "Variable Y",
+     pch = 19)
+
+cov(edad, precio)
+
 ```
 
-Interpreta el signo de la covarianza:
+Interpreta el signo de la covarianza: Estan correlacionadas negativamente
 
 ## b) Calcular las distancias de Mahalanobis al cuadrado (5 puntos)
 
 ```{r}
 # Escribe tu código aquí
+d2 <- mahalanobis(Autos, colMeans(Autos), cov(Autos))
+d2
 ```
 
 ## c) Determinar qué observaciones se encuentran dentro del contorno de probabilidad del 50% (5 puntos)
@@ -232,6 +248,10 @@ Calcula también la proporción de observaciones dentro.
 
 ```{r}
 # Escribe tu código aquí
+limite <- qchisq(0.5, df = ncol(X))
+dentro <- d2 <= limite
+sum(dentro)
+mean(dentro)
 ```
 
 ## d) Construir el diagrama Chi-cuadrado de las distancias de Mahalanobis (4 puntos)

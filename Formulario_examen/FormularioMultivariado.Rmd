@@ -359,15 +359,6 @@ plot(x, y,
      pch = 19)
 ```
 
-Argumentos principales:
-
-- `x`: variable del eje horizontal.
-- `y`: variable del eje vertical.
-- `main`: título del gráfico.
-- `xlab`: nombre mostrado en el eje X.
-- `ylab`: nombre mostrado en el eje Y.
-- `pch = 19`: usa puntos sólidos.
-
 ### Visualizaciones de un resultado `MVN`
 
 Primero debe existir un objeto generado por `MVN::mvn()`, por ejemplo `resultado_hz`.
@@ -376,12 +367,6 @@ Primero debe existir un objeto generado por `MVN::mvn()`, por ejemplo `resultado
 plot(resultado_hz, type = "persp")
 plot(resultado_hz, type = "contour")
 ```
-
-Argumentos:
-
-- `resultado_hz`: objeto devuelto por `MVN::mvn()`.
-- `type = "persp"`: muestra una superficie tridimensional de densidad.
-- `type = "contour"`: muestra curvas de nivel o contornos en dos dimensiones.
 
 ## Contorno de probabilidad con Mahalanobis
 
