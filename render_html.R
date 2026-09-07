@@ -14,8 +14,9 @@ if (!requireNamespace("rstudioapi", quietly = TRUE)) {
   stop("Instala rstudioapi con install.packages('rstudioapi').")
 }
 
-input <- rstudioapi::getActiveDocumentContext()$path
-if (!nzchar(input)) stop("Abre primero el archivo .Rmd o .qmd que quieres renderizar.")
+# Obtiene el archivo activo del editor, aunque la consola tenga el foco.
+input <- rstudioapi::getSourceEditorContext()$path
+if (!nzchar(input)) stop("Abre y guarda primero el archivo .Rmd o .qmd que quieres renderizar.")
 
 ext <- tolower(tools::file_ext(input))
 
