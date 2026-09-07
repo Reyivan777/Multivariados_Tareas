@@ -279,15 +279,15 @@ $$Var(c^TX)=c^TSc$$
 $$Cov(b^TX,c^TX)=b^TSc$$
 
 ``` r
-bX <- X %*% b
+bX <- X %*% b 
 cX <- X %*% c
 
-t(b) %*% medias
-t(c) %*% medias
+t(b) %*% medias # Valor esperado
+t(c) %*% medias # Valor esperado
 
-t(b) %*% S %*% b
-t(c) %*% S %*% c
-t(b) %*% S %*% c
+t(b) %*% S %*% b # Varianza b
+t(c) %*% S %*% c # Varianza c
+t(b) %*% S %*% c # Covarianza b y c
 ```
 
 Si la covarianza es distinta de cero, las combinaciones no son independientes. Si provienen de una normal multivariada, covarianza cero implica independencia.
