@@ -461,67 +461,143 @@ Residuo alto = mal predicho en Y; leverage alto = X extremo; Cook alto = puede m
 
 # 9. Análisis discriminante lineal (LDA)
 
-**Ruta:** definir grupos/predictores → explorar separación → ajustar LDA → interpretar LD → clasificar → validar → revisar supuestos.
+**Ruta:** definir grupos/predictores → revisar balance → explorar qué variables separan → calcular medias y priori → ajustar LDA → interpretar LD → clasificar → validar → revisar supuestos.
 
-Respuesta categórica conocida; busca combinaciones lineales que separen los grupos.
+LDA necesita una **respuesta categórica conocida** y predictores numéricos. Busca combinaciones lineales que separen al máximo los grupos; a diferencia de PCA, aquí las clases sí se usan para construir los nuevos ejes.
 
-## Ranking de predictores
+## Respuesta, predictores y balance de clases
 
 ``` r
-datos$grupo<-factor(datos$grupo); pred<-c("x1","x2","x3")         # definir respuesta y predictores
-Fval<-sapply(pred,function(v)summary(aov(datos[[v]]~datos$grupo))[[1]][["F value"]][1]); sort(Fval,decreasing=TRUE) # ranking
+datos$grupo<-factor(datos$grupo); pred<-c("x1","x2","x3")         # grupo = respuesta categórica; pred = variables numéricas
+table(datos$grupo); prop.table(table(datos$grupo))                  # tamaños y proporciones; revisar si hay desbalance
 ```
 
-F grande = mayores diferencias de medias entre grupos para ese predictor.
+## Ranking de predictores con F
+
+Se hace un ANOVA por predictor. Un F grande indica que las medias de esa variable difieren más entre grupos.
+
+``` r
+Fval<-sapply(pred,function(v)summary(aov(datos[[v]]~datos$grupo))[[1]][["F value"]][1]) # F de cada predictor
+ranking<-sort(Fval,decreasing=TRUE); ranking                       # ordenar de mayor a menor capacidad de separación individual
+```
+
+**Importante:** este ranking sirve para explorar y elegir variables para la gráfica; no obliga a eliminar las demás. En la práctica el modelo LDA se ajustó con todos los predictores.
 
 ## Visualización original
 
-``` r
-ranking<-names(sort(Fval,decreasing=TRUE)); var1<-ranking[1]; var2<-ranking[2] # elegir 2 mejores
-ggplot2::ggplot(datos,ggplot2::aes(x=.data[[var1]],y=.data[[var2]],color=grupo))+ggplot2::geom_point()+ggplot2::theme_minimal() # traslape original
-```
-
-Menor traslape entre grupos sugiere mejor capacidad de separación.
-
-## Ajuste y funciones discriminantes
+Usar las dos variables con mayor F para ver el traslape **antes** de LDA.
 
 ``` r
-form<-as.formula(paste("grupo ~",paste(pred,collapse=" + "))); modelo_lda<-MASS::lda(form,data=datos) # ajustar LDA
-modelo_lda$prior; modelo_lda$means; modelo_lda$scaling            # priori, medias por grupo y coeficientes LD
-prop_ld<-modelo_lda$svd^2/sum(modelo_lda$svd^2); 100*prop_ld      # % de separación explicada por cada LD
+var1<-names(ranking)[1]; var2<-names(ranking)[2]                  # dos predictores con mayor F
+ggplot2::ggplot(datos,ggplot2::aes(x=.data[[var1]],y=.data[[var2]],color=grupo))+ggplot2::geom_point()+ggplot2::theme_minimal() # puntos coloreados por clase real
 ```
 
-Máximo número de LD: $\min(p,g-1)$.
+Menor traslape = mejor separación potencial. Esta gráfica todavía está en las variables originales, no en LD1/LD2.
+
+## Medias por grupo
+
+LDA usa las diferencias entre los centros de los grupos. Conviene verlas explícitamente antes del ajuste.
+
+``` r
+medias_grupo<-sapply(pred,function(v)tapply(datos[[v]],datos$grupo,mean)) # media de cada predictor dentro de cada clase
+round(medias_grupo,3)                                                   # comparar centros: diferencias grandes ayudan a separar
+```
+
+## Probabilidades a priori
+
+Representan la probabilidad inicial de cada clase antes de observar los predictores:
+
+$$P(G_k)=\frac{n_k}{n}$$
+
+``` r
+frecuencias<-table(datos$grupo); priori<-prop.table(frecuencias) # contar clases y calcular priori desde sus frecuencias
+frecuencias; priori                                               # si están balanceadas, los priori serán similares/iguales
+```
+
+## Ajuste del modelo LDA
+
+``` r
+form<-as.formula(paste("grupo ~",paste(pred,collapse=" + ")))    # construir grupo ~ x1+x2+...
+modelo_lda<-MASS::lda(form,data=datos)                            # ajustar usando medias de grupo y covarianza común
+modelo_lda$prior; modelo_lda$means                               # priori usados y medias de cada predictor por grupo
+```
+
+`modelo_lda$means` debe contener la misma idea que calculaste manualmente en `medias_grupo`.
+
+## Número de funciones y separación explicada
+
+El máximo número de funciones discriminantes es:
+
+$$\boxed{\min(p,g-1)}$$
+
+``` r
+p<-length(pred); g<-nlevels(datos$grupo); min(p,g-1)              # nº máximo de LD posibles
+prop_ld<-modelo_lda$svd^2/sum(modelo_lda$svd^2); 100*prop_ld      # % relativo de separación explicado por LD1, LD2,...
+```
+
+Si LD1 explica casi todo, la principal separación entre grupos ocurre sobre ese eje.
+
+## Coeficientes y forma centrada de LD
+
+Los coeficientes `a` son calculados por LDA para producir direcciones con mucha separación entre grupos y poca dispersión dentro de ellos.
+
+``` r
+modelo_lda$scaling                                               # coeficientes a1,a2,... usados para construir cada LD
+centro<-colSums(modelo_lda$prior*modelo_lda$means); centro        # centro global ponderado por los priori
+```
+
+La forma usada en la práctica es:
+
+$$LD_k=a_1(X_1-\bar X_1)+a_2(X_2-\bar X_2)+\cdots+a_p(X_p-\bar X_p)$$
 
 ## Scores, posteriores y clasificación
 
+Cada observación recibe coordenadas LD1, LD2,... y probabilidades posteriores de pertenecer a cada clase.
+
 ``` r
-pred_lda<-predict(modelo_lda,newdata=datos); scores<-data.frame(grupo=datos$grupo,pred_lda$x) # clases/posteriores/scores
-head(pred_lda$posterior); head(pred_lda$class)                     # probabilidad por clase y clase predicha
+pred_lda<-predict(modelo_lda,newdata=datos); scores<-data.frame(grupo=datos$grupo,pred_lda$x) # obtener scores LD
+head(pred_lda$posterior); head(pred_lda$class)                     # probabilidades posteriores y clase con mayor probabilidad
 ```
 
 ## Gráficos discriminantes
 
+Estos gráficos ya muestran la separación **creada por LDA**.
+
 ``` r
 ggplot2::ggplot(scores,ggplot2::aes(LD1,LD2,color=grupo))+ggplot2::geom_point()+ggplot2::theme_minimal() # separación LD1-LD2
-ggplot2::ggplot(scores,ggplot2::aes(LD1))+ggplot2::geom_histogram(bins=15)+ggplot2::facet_wrap(~grupo)  # traslape en LD1
+ggplot2::ggplot(scores,ggplot2::aes(LD1))+ggplot2::geom_histogram(bins=15)+ggplot2::facet_wrap(~grupo)  # traslape de clases en LD1
+```
+
+## Clasificación sobre los datos ajustados
+
+Sirve para describir el ajuste, pero puede ser optimista porque usa los mismos datos con los que se construyó el modelo.
+
+``` r
+tabla_ajuste<-table(Real=datos$grupo,Predicha=pred_lda$class); tabla_ajuste # confusión usando el modelo completo
 ```
 
 ## LOOCV y matriz de confusión
 
+LOOCV deja una observación fuera, ajusta con las demás y luego intenta clasificar la observación excluida.
+
 ``` r
 cv<-MASS::lda(form,data=datos,CV=TRUE); tabla<-table(Real=datos$grupo,Predicha=cv$class) # validación cruzada y confusión
-sum(diag(tabla))/sum(tabla); diag(tabla)/rowSums(tabla)                # exactitud global y por clase
+precision<-sum(diag(tabla))/sum(tabla); error<-1-precision; acierto_clase<-diag(tabla)/rowSums(tabla) # métricas
+c(Precision=precision,Error=error); acierto_clase                  # desempeño global y por clase
 ```
 
-La diagonal contiene aciertos; con clases desbalanceadas revisar también el desempeño por clase.
+La diagonal contiene aciertos. Si hay desbalance, no quedarse únicamente con la precisión global.
 
 ## Supuestos de LDA
 
+LDA supone normalidad multivariada dentro de cada grupo y matrices de covarianza aproximadamente iguales.
+
 ``` r
-for(g in levels(datos$grupo)){Xg<-datos[datos$grupo==g,pred];print(MVN::mvn(Xg,mvn_test="mardia")$multivariate_normality)} # normalidad por grupo
-biotools::boxM(datos[,pred],datos$grupo)                                # H0: matrices de covarianza iguales
+for(g in levels(datos$grupo)){Xg<-datos[datos$grupo==g,pred];print(MVN::mvn(Xg,mvn_test="mardia")$multivariate_normality)} # H0 normalidad multivariada por grupo
+biotools::boxM(datos[,pred],datos$grupo)                                # H0: Sigma1=Sigma2=...; p<.05 rechaza igualdad
 ```
+
+Un modelo puede clasificar bien aunque un supuesto no se cumpla; reportar por separado desempeño y supuestos.
 
 # 10. Regresión logística
 
