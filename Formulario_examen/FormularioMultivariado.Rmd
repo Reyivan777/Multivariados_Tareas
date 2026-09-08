@@ -500,56 +500,84 @@ En Mardia y Box M, $p<0.05$ rechaza el supuesto correspondiente. Un buen porcent
 
 # 10. Regresión logística (Módulo 2)
 
-Respuesta binaria; modela $p=P(Y=1)$ mediante el logit.
+Respuesta binaria. Primero estima $p=P(Y=1)$ y después puede convertir esa probabilidad en clase mediante un umbral.
 
-$$\log\left(\frac{p}{1-p}\right)=\beta_0+\beta_1X_1+\cdots+\beta_pX_p$$
+$$\log\left(\frac{p}{1-p}\right)=\beta_0+\beta_1X_1+\cdots+\beta_pX_p,\qquad
+p=\frac{e^\eta}{1+e^\eta}$$
 
 ## Ajustar e interpretar
 
 ``` r
-modelo_log <- glm(y ~ x1 + x2,data=datos,family=binomial)
-summary(modelo_log)
-coef(modelo_log); exp(coef(modelo_log))     # odds ratios
+modelo_log <- glm(y ~ x1,data=entrenamiento,family=binomial)
+summary(modelo_log)                         # p<0.05: beta_j significativo
+beta <- coef(modelo_log)
+OR <- exp(beta)                             # odds ratios
+100*(OR-1)                                 # cambio % de odds
 ```
 
-$e^{\beta_j}$ = factor multiplicativo de los odds por una unidad adicional de $X_j$, manteniendo las demás constantes.
+$\beta_j>0$ aumenta el log-odds de $Y=1$; $e^{\beta_j}$ multiplica los odds por cada unidad adicional de $X_j$.
 
-## Probabilidades y clasificación
+## Probabilidad para nuevos valores
+
+``` r
+predict(modelo_log,newdata=data.frame(x1=valor),type="response")
+```
+
+Curva logística para un predictor:
+
+``` r
+plot(entrenamiento$x1,as.numeric(entrenamiento$y=="1"))
+curve(predict(modelo_log,data.frame(x1=x),type="response"),add=TRUE,lwd=2)
+```
+
+## Deviance: modelo nulo vs modelo
+
+``` r
+nulo <- glm(y ~ 1,data=entrenamiento,family=binomial)
+anova(nulo,modelo_log,test="Chisq")         # p<0.05: predictor(es) mejoran al nulo
+```
+
+## Clasificación y matriz de confusión
 
 ``` r
 prob <- predict(modelo_log,newdata=prueba,type="response")
-pred <- ifelse(prob>0.5,"1","0")          # adaptar etiquetas/umbral
+pred <- ifelse(prob>0.5,"1","0")          # adaptar clase positiva y umbral
 pred <- factor(pred,levels=levels(prueba$y))
 tabla <- table(Real=prueba$y,Predicho=pred)
 tabla
 ```
 
+Umbral 0.5: `prob > 0.5` → clase positiva. La diagonal son aciertos.
+
 ## Métricas binarias
 
-Adaptar cuál categoría es la positiva.
+Definir primero cuál es la clase positiva.
 
 ``` r
 exactitud <- sum(diag(tabla))/sum(tabla); error <- 1-exactitud
-sensibilidad <- tabla["1","1"]/sum(tabla["1",])
-especificidad <- tabla["0","0"]/sum(tabla["0",])
+sensibilidad <- tabla["1","1"]/sum(tabla["1",])   # verdaderos positivos / positivos reales
+especificidad <- tabla["0","0"]/sum(tabla["0",]) # verdaderos negativos / negativos reales
 c(Exactitud=exactitud,Error=error,Sensibilidad=sensibilidad,Especificidad=especificidad)
 ```
 
-## Significancia global y validación
+Exactitud sola puede ocultar mal desempeño en una clase; revisar sensibilidad y especificidad.
+
+## Supuestos/revisión
+
+Independencia: revisar diseño y residuos; si hay orden temporal, usar el procedimiento trabajado en clase.
 
 ``` r
-nulo <- glm(y ~ 1,data=datos,family=binomial)
-anova(nulo,modelo_log,test="Chisq")         # p<0.05: predictores mejoran al nulo
-
 res <- residuals(modelo_log,type="deviance")
-plot(seq_along(res),res); abline(h=0,lty=2) # revisar independencia/patrones
+plot(seq_along(res),res); abline(h=0,lty=2)
+# lmtest::dwtest(res ~ tiempo)              # si existe orden temporal
 ```
 
-Linealidad del predictor continuo con el logit (Box-Tidwell; requiere valores positivos):
+Linealidad del predictor continuo con el **logit**:
 
 ``` r
+y_num <- ifelse(datos$y=="1",1,0)
 datos$x1_pos <- datos$x1-min(datos$x1)+0.001
-car::boxTidwell(y_num ~ x1_pos,data=datos)  # p<0.05 sugiere falta de linealidad
+car::boxTidwell(y_num ~ x1_pos,data=datos)  # p>0.05 favorece linealidad usada en la actividad
 ```
 
-Con un solo predictor no puede haber multicolinealidad entre predictores; con varios, revisar VIF como en regresión lineal.
+Con un solo predictor no hay multicolinealidad entre predictores; con varios revisar VIF. Revisar también `table(y)` para comprobar tamaño suficiente de ambas clases.
