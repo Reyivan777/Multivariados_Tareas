@@ -267,46 +267,72 @@ PCA usa varianza total para reducir dimensión; FA explica varianza común media
 
 # 6. Clustering jerárquico (Módulo 1)
 
-## Desde datos o matriz de distancias
+No predice una respuesta: agrupa objetos según sus distancias. No requiere fijar $k$ antes de construir el dendrograma.
 
-Estandarizar cuando las variables tengan escalas distintas.
+## Distancias y métodos vistos
 
 ``` r
-Xz <- scale(X); d <- dist(Xz)             # si ya dan matriz M: d <- as.dist(M)
-J_avg <- hclust(d,method="average")       # distancia promedio
-J_single <- hclust(d,method="single")    # vecino más cercano
-plot(J_avg,hang=-1); plot(J_single,hang=-1)
+Xz <- scale(X); d <- dist(Xz)              # desde datos: estandarizar si escalas distintas
+# d <- as.dist(M)                           # usar esto si ya proporcionan matriz de distancias
+as.matrix(d)                                # ver matriz de distancias
+
+J_single <- hclust(d,method="single")      # vecino más cercano
+J_average <- hclust(d,method="average")   # promedio
+plot(J_single,hang=-1); plot(J_average,hang=-1)
 ```
 
-Single: distancia mínima entre dos conglomerados. Average: promedio de todas las distancias entre ambos grupos.
+$$D_{single}(A,B)=\min d(i,j),\qquad
+D_{average}(A,B)=\frac{1}{n_An_B}\sum_{i\in A}\sum_{j\in B}d(i,j)$$
 
-## Obtener grupos
+`single` usa la menor distancia entre ambos grupos; `average` usa todas las distancias. La altura del dendrograma es la distancia a la que ocurre cada unión.
+
+## Cortar dendrograma
+
+Buscar un salto grande en las alturas y elegir el corte según el ejercicio.
 
 ``` r
-grupo <- cutree(J_avg,k=2)                # sustituir k
-table(grupo)
+grupo <- cutree(J_average,k=2)             # sustituir k
+grupo; table(grupo)
 ```
 
 # 7. Clustering no jerárquico: K-means (Módulo 1)
 
-K-means agrupa observaciones; no predice una variable. Estandarizar si hay escalas diferentes.
+K-means requiere elegir $k$ y asigna cada observación al centroide más cercano, minimizando la variación dentro de los grupos.
+
+## Preparar y elegir k
 
 ``` r
-M1 <- na.omit(M); Mz <- scale(M1)
+M1 <- na.omit(M); Mz <- scale(M1)           # conservar M1 para interpretar escala original
 set.seed(123)
 factoextra::fviz_nbclust(Mz,kmeans,method="wss",k.max=8)        # codo
-factoextra::fviz_nbclust(Mz,kmeans,method="silhouette",k.max=8) # silueta
+factoextra::fviz_nbclust(Mz,kmeans,method="silhouette",k.max=8) # mayor silueta
 ```
 
-Mayor silueta = mejor separación. Elegir `k` usando codo + silueta.
+Si piden comparar numéricamente la silueta:
 
 ``` r
-k <- 2                                      # sustituir k elegido
-km <- kmeans(Mz,centers=k,nstart=25)
-km$centers; table(km$cluster)
-factoextra::fviz_cluster(km,data=Mz,show.clust.cent=TRUE)
-aggregate(M1,by=list(Cluster=km$cluster),FUN=mean) # interpretar en escala original
+ks <- 2:8
+sil <- sapply(ks,function(k){
+  km <- kmeans(Mz,centers=k,nstart=25)
+  mean(cluster::silhouette(km$cluster,dist(Mz))[,3])
+})
+data.frame(k=ks,Silueta=sil)
+k_opt <- ks[which.max(sil)]
 ```
+
+Codo: buscar dónde añadir grupos deja de reducir mucho la WSS. Silueta cerca de 1 = buena asignación; 0 = frontera; negativa = posible mala asignación.
+
+## Modelo final e interpretación
+
+``` r
+set.seed(123)
+km <- kmeans(Mz,centers=k_opt,nstart=25)
+km$centers; table(km$cluster); km$tot.withinss
+factoextra::fviz_cluster(km,data=Mz,show.clust.cent=TRUE)
+aggregate(M1,by=list(Cluster=km$cluster),FUN=mean) # describir grupos en escala original
+```
+
+El número de cluster puede intercambiarse; interpretar sus perfiles/centros, no la etiqueta 1, 2, etc.
 
 # 8. Regresión lineal (Módulo 2)
 
