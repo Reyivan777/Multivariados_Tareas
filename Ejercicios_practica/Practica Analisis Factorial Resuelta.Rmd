@@ -384,10 +384,10 @@ print(modelo_minres_varimax$loadings, cutoff = 0.30, sort = TRUE)
 
 **Interpretación.** Los dos factores deben explicar una proporción grande de la información común. La solución ML + Varimax debería explicar alrededor de **85–90%** de la varianza de las variables estandarizadas en este ejemplo. Lo importante no es escoger el modelo únicamente por tener un porcentaje ligeramente mayor, sino revisar también:
 
-1. si el método es razonable para los datos;
-2. si las cargas forman una estructura clara;
-3. si las comunalidades son adecuadas;
-4. si la interpretación de los factores tiene sentido.
+1.  si el método es razonable para los datos;
+2.  si las cargas forman una estructura clara;
+3.  si las comunalidades son adecuadas;
+4.  si la interpretación de los factores tiene sentido.
 
 Como Mardia no debería mostrar una violación extrema y ML produce una estructura clara, **ML + Varimax** es una elección razonable para este ejemplo. Si la normalidad fuera claramente problemática, MINRES sería una alternativa especialmente útil para comparar.
 

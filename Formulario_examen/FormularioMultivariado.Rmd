@@ -435,7 +435,7 @@ res <- residuals(modelo); fit <- fitted(modelo)
 shapiro.test(res)                           # H0: normalidad
 plot(fit,res); abline(h=0)                  # homocedasticidad: sin patrón/abanico
 plot(res,type="b"); abline(h=0)            # independencia visual
-DW <- sum(diff(res)^2)/sum(res^2)           # cerca de 2 = sin señal fuerte de autocorrelación
+DW <- sum(diff(res)^2)/sum(res^2)           # cerca de 2 = sin señal fuerte de autocorrelación, Durbin-Watson.
 par(mfrow=c(2,2)); plot(modelo); par(mfrow=c(1,1))
 ```
 
