@@ -12,8 +12,8 @@ knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
 
 En esta práctica se trabajan los dos tipos de clustering vistos en las actividades del curso:
 
-1. **Clustering jerárquico:** construir conglomerados a partir de una matriz de distancias y comparar los métodos de promedio (`average`) y vecino más cercano (`single`).
-2. **Clustering no jerárquico:** aplicar K-means, seleccionar el número de conglomerados mediante codo y silueta, y después interpretar los grupos en la escala original.
+1.  **Clustering jerárquico:** construir conglomerados a partir de una matriz de distancias y comparar los métodos de promedio (`average`) y vecino más cercano (`single`).
+2.  **Clustering no jerárquico:** aplicar K-means, seleccionar el número de conglomerados mediante codo y silueta, y después interpretar los grupos en la escala original.
 
 En ambos casos el objetivo es **agrupar observaciones parecidas**, no predecir una variable respuesta.
 
@@ -353,7 +353,7 @@ Por eso:
 # 17. Diferencia entre jerárquico y K-means
 
 | Característica | Jerárquico | K-means |
-|---|---|---|
+|------------------------|------------------------|------------------------|
 | ¿Se indica $k$ desde el inicio? | No | Sí |
 | Resultado principal | Dendrograma | Asignación y centros |
 | Base del método | Distancias entre objetos/grupos | Distancia a centroides |
