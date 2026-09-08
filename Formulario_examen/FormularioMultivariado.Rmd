@@ -479,6 +479,21 @@ Fval <- sapply(pred,function(v){
 sort(Fval,decreasing=TRUE)                 # F grande = mayor diferencia entre medias de grupos
 ```
 
+### Gráfico de segmentación original
+
+Visualizar las dos variables con mayor F antes de ajustar LDA:
+
+``` r
+ranking <- names(sort(Fval,decreasing=TRUE))
+var1 <- ranking[1]; var2 <- ranking[2]
+
+ggplot2::ggplot(datos,ggplot2::aes(x=.data[[var1]],y=.data[[var2]],color=grupo)) +
+  ggplot2::geom_point(alpha=.75,size=2.5) +
+  ggplot2::labs(x=var1,y=var2,color="Grupo") + ggplot2::theme_minimal()
+```
+
+Grupos bien separados aquí sugieren buena capacidad discriminante; traslape anticipa posibles errores de clasificación.
+
 ## Ajustar modelo, priori y medias
 
 ``` r
@@ -514,7 +529,30 @@ head(pred_lda$x)                            # scores LD1, LD2, ...
 head(pred_lda$posterior)                    # probabilidades posteriores; filas suman 1
 ```
 
-Si hay 2 LD, graficar `pred_lda$x[,1]` vs `pred_lda$x[,2]` por grupo para ver separación.
+### Gráfico LD1 vs LD2
+
+Si existen al menos 2 funciones discriminantes:
+
+``` r
+scores <- data.frame(grupo=datos$grupo,pred_lda$x)
+ggplot2::ggplot(scores,ggplot2::aes(x=LD1,y=LD2,color=grupo)) +
+  ggplot2::geom_point(alpha=.8,size=2.5) + ggplot2::theme_minimal()
+```
+
+Mayor separación entre colores = mejor separación en el espacio discriminante. Si LD1 explica casi toda la separación, los grupos tenderán a diferenciarse principalmente en el eje horizontal.
+
+### Histogramas de funciones discriminantes
+
+Útiles para ver cuánto se traslapan las distribuciones de cada grupo:
+
+``` r
+ggplot2::ggplot(scores,ggplot2::aes(x=LD1)) +
+  ggplot2::geom_histogram(bins=15) + ggplot2::facet_wrap(~grupo)
+
+# Repetir con x=LD2 si existe LD2
+```
+
+Poco traslape entre histogramas = mejor discriminación; mucho traslape = mayor posibilidad de confundir clases.
 
 ## LOOCV y matriz de confusión
 
