@@ -234,7 +234,7 @@ psych::cortest.bartlett(R,n=nrow(M))        # H0: R=I; p<0.05 favorece FA
 K <- psych::KMO(R); K$MSA; K$MSAi          # KMO global e individual
 ```
 
-KMO: <0.50 inaceptable; 0.50–0.59 miserable; 0.60–0.69 mediocre; 0.70–0.79 aceptable; 0.80–0.89 meritorio; >=0.90 maravilloso.
+KMO: \<0.50 inaceptable; 0.50–0.59 miserable; 0.60–0.69 mediocre; 0.70–0.79 aceptable; 0.80–0.89 meritorio; \>=0.90 maravilloso.
 
 Si usan ML, revisar también Mardia en la sección 3; si la normalidad es problemática, comparar con MINRES.
 
@@ -401,7 +401,7 @@ aux <- lm(x1 ~ x2 + x3,data=datos)          # repetir cambiando predictor respue
 VIF_x1 <- 1/(1-summary(aux)$r.squared)
 ```
 
-VIF < 5: sin problema importante según el criterio usado en las actividades.
+VIF \< 5: sin problema importante según el criterio usado en las actividades.
 
 ## Validación de residuos
 

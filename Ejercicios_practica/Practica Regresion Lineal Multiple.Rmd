@@ -38,7 +38,8 @@ Construye una matriz de diagramas de dispersión entre las cuatro variables.
 
 ```{r}
 # Tu código
-
+vars <- c("mpg","wt","hp","disp")          # sustituir nombres
+pairs(datos[,vars],pch=19)  
 ```
 
 **Pregunta:** ¿Qué predictor parece tener la relación lineal más fuerte con `mpg`? Indica también el signo de la relación.
@@ -66,20 +67,22 @@ $$mpg=\beta_0+\beta_1 wt+\beta_2 hp+\beta_3 disp+\varepsilon$$
 
 ```{r}
 # Tu código
+modelo <- lm(mpg ~ wt + hp + disp,data=datos)  # sustituir respuesta/predictores
+summary(modelo); coef(modelo)
 ```
 
 ## 2.1 Interpretación general
 
 A partir de `summary()` responde:
 
-1.  ¿Cuál es el valor de $R^2$?
-2.  ¿Cuál es el $R^2$ ajustado?
-3.  ¿El modelo es globalmente significativo? Justifica con la prueba F.
-4.  ¿Qué predictores son individualmente significativos con $\alpha=0.05$?
+1.  ¿Cuál es el valor de $R^2$? 0.8268
+2.  ¿Cuál es el $R^2$ ajustado? 0.8083
+3.  ¿El modelo es globalmente significativo? Justifica con la prueba F. El modelo es significativo ya que el p value es diminuto por lo cual al menos un coeficiente de alguna variable es diferente de 0
+4.  ¿Qué predictores son individualmente significativos con $\alpha=0.05$? wt y hp, disp no es significativo ya que tiene un p value bastante alto
 
 ## 2.2 Interpretación de coeficientes
 
-Escribe la ecuación estimada del modelo e interpreta los coeficientes de `wt` y `hp` manteniendo constantes las demás variables.
+Escribe la ecuación estimada del modelo e interpreta los coeficientes de `wt` y `hp` manteniendo constantes las demás variables. cuando wt aumenta en una unidad y todas las variables estan constantes la predicción final baja 3.800891. Cuando hp aumenta en una unidad y todas las demas variables estan constantes la predicción baja -0.031157.
 
 # 3. Mínimos cuadrados con matrices
 
@@ -89,6 +92,11 @@ $$\hat\beta=(X^TX)^{-1}X^TY$$
 
 ```{r}
 # Tu código
+Y <- as.matrix(datos$mpg); X <- cbind(1,datos$wt,datos$hp,datos$disp)
+beta_hat <- solve(t(X)%*%X)%*%t(X)%*%Y
+beta_hat
+
+
 ```
 
 Compara los coeficientes obtenidos con `coef(modelo)`.
@@ -101,18 +109,24 @@ Obtén un modelo mediante AIC y otro mediante BIC usando selección por pasos en
 
 ```{r}
 # Tu código
+modelo_AIC <- step(modelo,direction="both",trace=0)
+modelo_BIC <- step(modelo,direction="both",trace=0,k=log(nrow(datos)))
+formula(modelo_AIC); formula(modelo_BIC)
+AIC(modelo); BIC(modelo)
 ```
 
 **Preguntas:**
 
-1.  ¿AIC y BIC seleccionan el mismo modelo?
-2.  ¿Qué variable o variables se eliminan?
-3.  Compara $R^2$ ajustado, AIC y BIC del modelo completo y del modelo seleccionado.
+1.  ¿AIC y BIC seleccionan el mismo modelo? SI
+2.  ¿Qué variable o variables se eliminan? eliminan el disp ambos
+3.  Compara $R^2$ ajustado, AIC y BIC del modelo completo y del modelo seleccionado. El $R^2$ ajustado del modelo completo era 0.8083, y del seleccionado es 0.8148 por lo que se gana un poco de explicación de variabilidad
 
 Define como `modelo_final` el modelo que consideres más adecuado y justifica brevemente tu elección.
 
 ```{r}
 # Tu código
+modelo <- lm(mpg ~ wt + hp,data=datos)  # sustituir respuesta/predictores
+summary(modelo); coef(modelo)
 ```
 
 # 5. Intervalos de confianza y predicción
@@ -127,6 +141,9 @@ Adapta `newdata` a las variables que permanezcan en tu `modelo_final`.
 
 ```{r}
 # Tu código
+nuevo <- data.frame(x=c(wt=3, hp=150))                # sustituir valores
+predict(modelo, newdata=nuevo, interval="confidence", level=0.95)
+predict(modelo, newdata=nuevo, interval="prediction", level=0.95)
 ```
 
 Calcula:
