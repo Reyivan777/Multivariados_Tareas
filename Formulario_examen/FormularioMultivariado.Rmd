@@ -421,41 +421,68 @@ Residuo grande = atípico en $Y$; leverage alto = predictor extremo; Cook alto =
 
 # 9. Análisis discriminante lineal - LDA (Módulo 2)
 
-Respuesta categórica; LDA construye combinaciones lineales para separar grupos.
+Respuesta categórica conocida; LDA busca combinaciones lineales que separen los grupos. Evitar usar como predictor una variable de la que se construyó la respuesta.
 
-## Ajustar modelo
+## Preparar y explorar separación
 
 ``` r
-datos$grupo <- factor(datos$grupo)          # respuesta categórica
+datos$grupo <- factor(datos$grupo)
 pred <- c("x1","x2","x3")
+
+Fval <- sapply(pred,function(v){
+  summary(aov(datos[[v]] ~ datos$grupo))[[1]][["F value"]][1]
+})
+sort(Fval,decreasing=TRUE)                 # F grande = mayor diferencia entre medias de grupos
+```
+
+## Ajustar modelo, priori y medias
+
+``` r
 form <- as.formula(paste("grupo ~",paste(pred,collapse=" + ")))
 modelo_lda <- MASS::lda(form,data=datos)
-modelo_lda$prior; modelo_lda$means; modelo_lda$scaling
+modelo_lda$prior                            # probabilidades a priori
+modelo_lda$means                            # medias de predictores por grupo
+modelo_lda$scaling                          # coeficientes LD
 ```
 
 Máximo número de funciones discriminantes: $\min(p,g-1)$.
 
-## Predicción y funciones discriminantes
+Proporción de separación explicada por cada LD:
+
+``` r
+prop_ld <- modelo_lda$svd^2/sum(modelo_lda$svd^2)
+100*prop_ld
+```
+
+Forma centrada: $LD_k=\sum_j a_j(X_j-\bar X_j)$.
+
+``` r
+centro <- colSums(modelo_lda$prior*modelo_lda$means)
+centro
+```
+
+## Scores, probabilidades y clasificación
 
 ``` r
 pred_lda <- predict(modelo_lda,newdata=datos)
 pred_lda$class                              # clase predicha
 head(pred_lda$x)                            # scores LD1, LD2, ...
+head(pred_lda$posterior)                    # probabilidades posteriores; filas suman 1
 ```
 
-Coeficientes mayores en valor absoluto aportan más a cada LD; el signo indica dirección.
+Si hay 2 LD, graficar `pred_lda$x[,1]` vs `pred_lda$x[,2]` por grupo para ver separación.
 
 ## LOOCV y matriz de confusión
 
 ``` r
 cv <- MASS::lda(form,data=datos,CV=TRUE)
 tabla <- table(Real=datos$grupo,Predicha=cv$class)
-tabla
 precision <- sum(diag(tabla))/sum(tabla); error <- 1-precision
 acierto_clase <- diag(tabla)/rowSums(tabla)
+tabla; precision; error; acierto_clase
 ```
 
-Diagonal = clasificaciones correctas. Revisar precisión global y por clase si hay desbalance.
+Diagonal = aciertos. Si hay desbalance, revisar precisión por clase además de la global.
 
 ## Supuestos de LDA
 
@@ -466,10 +493,10 @@ for(g in levels(datos$grupo)){
   Xg <- datos[datos$grupo==g,pred]
   print(MVN::mvn(Xg,mvn_test="mardia")$multivariate_normality)
 }
-biotools::boxM(datos[,pred],datos$grupo)    # H0: matrices de covarianza iguales
+biotools::boxM(datos[,pred],datos$grupo)    # H0: Sigma1=Sigma2=...=Sigmag
 ```
 
-En ambas pruebas, $p<0.05$ implica que el supuesto correspondiente no se cumple.
+En Mardia y Box M, $p<0.05$ rechaza el supuesto correspondiente. Un buen porcentaje de clasificación no implica que todos los supuestos se cumplan.
 
 # 10. Regresión logística (Módulo 2)
 
