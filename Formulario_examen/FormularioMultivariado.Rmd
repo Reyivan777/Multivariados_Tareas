@@ -38,23 +38,40 @@ $$A_{m\times n}B_{n\times p}=C_{m\times p}$$
 
 ## Preparar la matriz de datos
 
-`X` debe contener solo las variables cuantitativas que participan en el análisis.
+`X` debe contener solo las variables cuantitativas que participan en el análisis. Aquí se asume la convención usual del curso: **filas = observaciones, columnas = variables**.
 
 ``` r
 variables<-c("x1","x2","x3"); X<-as.matrix(datos[,variables])    # seleccionar solo variables cuantitativas
-n<-nrow(X); p<-ncol(X); medias<-colMeans(X)                      # tamaño de muestra, nº variables y medias
-Xc<-sweep(X,2,medias,"-"); S<-cov(X); R<-cor(X)                  # centrar; usar S para covarianza y R para correlación
+n<-nrow(X); p<-ncol(X); medias<-colMeans(X)                      # tamaño de muestra, nº variables y vector de medias
+Xc<-sweep(X,2,medias,"-"); S<-cov(X); R<-cor(X)                  # centrar; S muestral y R de correlaciones
 ```
 
 $$\bar X=\frac1n\mathbf1^TX,\qquad S=\frac1{n-1}X_c^TX_c$$
 
+## Si te dan una matriz X y debes calcular media y covarianza
+
+Con **observaciones en filas**, primero calcula el vector de medias por columna y centra cada columna. Después la covarianza entre variables siempre debe quedar como una matriz $p\times p$.
+
+``` r
+mu<-colMeans(X); Xc<-sweep(X,2,mu,"-")                           # media de cada variable y datos centrados
+S<-t(Xc)%*%Xc/(nrow(X)-1)                                       # covarianza muestral; equivalente a cov(X)
+Sigma<-t(Xc)%*%Xc/nrow(X)                                       # usar 1/n si piden covarianza poblacional/estimador ML
+```
+
+$$S=\frac1{n-1}X_c^TX_c,\qquad \hat\Sigma=\frac1nX_c^TX_c$$
+
+**Cuidado:** si las observaciones están en filas, `Xc %*% t(Xc)` produce una matriz $n\times n$ de relaciones entre observaciones; **no** es la matriz $p\times p$ de covarianzas entre variables. Solo cambia el orden del producto si el ejercicio define observaciones en columnas.
+
 ## Covarianza, eigen y correlaciones
 
-`eigen()` aparece especialmente en PCA y al revisar singularidad/varianza generalizada.
+`eigen()` aparece especialmente en PCA, Mahalanobis y al revisar singularidad/varianza generalizada. Si $Q$ contiene los vectores propios como columnas y $\Lambda$ los valores propios en la diagonal:
+
+$$S=Q\Lambda Q^T \qquad \text{o} \qquad \Sigma=Q\Lambda Q^T$$
 
 ``` r
 S_manual<-t(Xc)%*%Xc/(n-1)                                      # usar si piden procedimiento matricial de S
-eig<-eigen(M); eig$values; eig$vectors                           # usar en PCA/varianza generalizada; M=S o R
+eig<-eigen(M); Q<-eig$vectors; Lambda<-diag(eig$values)          # M puede ser S, Sigma o R
+M_rec<-Q%*%Lambda%*%t(Q)                                        # reconstruir M a partir de eigenvalores/vectores
 corrplot::corrplot(R,method="color",type="lower",addCoef.col="black",diag=FALSE) # visualizar signo/fuerza de correlaciones
 ```
 
@@ -130,14 +147,26 @@ legend("topleft",c("Regresión","IC 95%","IP 95%"),lty=c(1,2,3),bty="n") # ident
 
 # 3. Normal multivariada
 
-**Ruta:** definir $\mu$ y $\Sigma$ → calcular probabilidades/transformaciones → visualizar → comprobar normalidad → revisar Mahalanobis y singularidad.
+**Ruta:** obtener/definir $\mu$ y $\Sigma$ → calcular probabilidades/transformaciones → visualizar → comprobar normalidad → revisar Mahalanobis y singularidad.
 
-## Definir una normal bivariada y calcular probabilidades
+## Si te dan directamente μ y Σ
 
 ``` r
 mu<-c(mu1,mu2); Sigma<-matrix(c(var1,cov12,cov12,var2),2,byrow=TRUE) # definir media y covarianza dadas
 mnormt::pmnorm(c(x1,x2),mean=mu,varcov=Sigma)                       # usar para P(X1<=x1,X2<=x2)
 ```
+
+## Si te dan una matriz de observaciones X
+
+Con filas = observaciones y columnas = variables:
+
+``` r
+mu<-colMeans(X); Xc<-sweep(X,2,mu,"-")                           # obtener vector de medias y centrar X
+S<-cov(X)                                                        # usar cuando piden covarianza muestral (divide entre n-1)
+Sigma<-t(Xc)%*%Xc/nrow(X)                                       # usar cuando el ejercicio pide Sigma con divisor n
+```
+
+Después puedes usar `mu` y `Sigma` exactamente igual que si el ejercicio los hubiera proporcionado desde el inicio.
 
 ## Superficie interactiva y contornos
 
