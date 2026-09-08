@@ -1840,37 +1840,66 @@ común mediante factores latentes y separa la unicidad.</p>
 </div>
 <div id="clustering-jerárquico-módulo-1" class="section level1">
 <h1>6. Clustering jerárquico (Módulo 1)</h1>
-<div id="desde-datos-o-matriz-de-distancias" class="section level2">
-<h2>Desde datos o matriz de distancias</h2>
-<p>Estandarizar cuando las variables tengan escalas distintas.</p>
-<pre class="r"><code>Xz &lt;- scale(X); d &lt;- dist(Xz)             # si ya dan matriz M: d &lt;- as.dist(M)
-J_avg &lt;- hclust(d,method=&quot;average&quot;)       # distancia promedio
-J_single &lt;- hclust(d,method=&quot;single&quot;)    # vecino más cercano
-plot(J_avg,hang=-1); plot(J_single,hang=-1)</code></pre>
-<p>Single: distancia mínima entre dos conglomerados. Average: promedio
-de todas las distancias entre ambos grupos.</p>
+<p>No predice una respuesta: agrupa objetos según sus distancias. No
+requiere fijar <span class="math inline">\(k\)</span> antes de construir
+el dendrograma.</p>
+<div id="distancias-y-métodos-vistos" class="section level2">
+<h2>Distancias y métodos vistos</h2>
+<pre class="r"><code>Xz &lt;- scale(X); d &lt;- dist(Xz)              # desde datos: estandarizar si escalas distintas
+# d &lt;- as.dist(M)                           # usar esto si ya proporcionan matriz de distancias
+as.matrix(d)                                # ver matriz de distancias
+
+J_single &lt;- hclust(d,method=&quot;single&quot;)      # vecino más cercano
+J_average &lt;- hclust(d,method=&quot;average&quot;)   # promedio
+plot(J_single,hang=-1); plot(J_average,hang=-1)</code></pre>
+<p><span class="math display">\[D_{single}(A,B)=\min d(i,j),\qquad
+D_{average}(A,B)=\frac{1}{n_An_B}\sum_{i\in A}\sum_{j\in
+B}d(i,j)\]</span></p>
+<p><code>single</code> usa la menor distancia entre ambos grupos;
+<code>average</code> usa todas las distancias. La altura del dendrograma
+es la distancia a la que ocurre cada unión.</p>
 </div>
-<div id="obtener-grupos" class="section level2">
-<h2>Obtener grupos</h2>
-<pre class="r"><code>grupo &lt;- cutree(J_avg,k=2)                # sustituir k
-table(grupo)</code></pre>
+<div id="cortar-dendrograma" class="section level2">
+<h2>Cortar dendrograma</h2>
+<p>Buscar un salto grande en las alturas y elegir el corte según el
+ejercicio.</p>
+<pre class="r"><code>grupo &lt;- cutree(J_average,k=2)             # sustituir k
+grupo; table(grupo)</code></pre>
 </div>
 </div>
 <div id="clustering-no-jerárquico-k-means-módulo-1" class="section level1">
 <h1>7. Clustering no jerárquico: K-means (Módulo 1)</h1>
-<p>K-means agrupa observaciones; no predice una variable. Estandarizar
-si hay escalas diferentes.</p>
-<pre class="r"><code>M1 &lt;- na.omit(M); Mz &lt;- scale(M1)
+<p>K-means requiere elegir <span class="math inline">\(k\)</span> y
+asigna cada observación al centroide más cercano, minimizando la
+variación dentro de los grupos.</p>
+<div id="preparar-y-elegir-k" class="section level2">
+<h2>Preparar y elegir k</h2>
+<pre class="r"><code>M1 &lt;- na.omit(M); Mz &lt;- scale(M1)           # conservar M1 para interpretar escala original
 set.seed(123)
 factoextra::fviz_nbclust(Mz,kmeans,method=&quot;wss&quot;,k.max=8)        # codo
-factoextra::fviz_nbclust(Mz,kmeans,method=&quot;silhouette&quot;,k.max=8) # silueta</code></pre>
-<p>Mayor silueta = mejor separación. Elegir <code>k</code> usando codo +
-silueta.</p>
-<pre class="r"><code>k &lt;- 2                                      # sustituir k elegido
-km &lt;- kmeans(Mz,centers=k,nstart=25)
-km$centers; table(km$cluster)
+factoextra::fviz_nbclust(Mz,kmeans,method=&quot;silhouette&quot;,k.max=8) # mayor silueta</code></pre>
+<p>Si piden comparar numéricamente la silueta:</p>
+<pre class="r"><code>ks &lt;- 2:8
+sil &lt;- sapply(ks,function(k){
+  km &lt;- kmeans(Mz,centers=k,nstart=25)
+  mean(cluster::silhouette(km$cluster,dist(Mz))[,3])
+})
+data.frame(k=ks,Silueta=sil)
+k_opt &lt;- ks[which.max(sil)]</code></pre>
+<p>Codo: buscar dónde añadir grupos deja de reducir mucho la WSS.
+Silueta cerca de 1 = buena asignación; 0 = frontera; negativa = posible
+mala asignación.</p>
+</div>
+<div id="modelo-final-e-interpretación" class="section level2">
+<h2>Modelo final e interpretación</h2>
+<pre class="r"><code>set.seed(123)
+km &lt;- kmeans(Mz,centers=k_opt,nstart=25)
+km$centers; table(km$cluster); km$tot.withinss
 factoextra::fviz_cluster(km,data=Mz,show.clust.cent=TRUE)
-aggregate(M1,by=list(Cluster=km$cluster),FUN=mean) # interpretar en escala original</code></pre>
+aggregate(M1,by=list(Cluster=km$cluster),FUN=mean) # describir grupos en escala original</code></pre>
+<p>El número de cluster puede intercambiarse; interpretar sus
+perfiles/centros, no la etiqueta 1, 2, etc.</p>
+</div>
 </div>
 <div id="regresión-lineal-módulo-2" class="section level1">
 <h1>8. Regresión lineal (Módulo 2)</h1>

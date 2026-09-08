@@ -38,6 +38,7 @@ Construye una matriz de diagramas de dispersión entre las cuatro variables.
 
 ```{r}
 # Tu código
+
 ```
 
 **Pregunta:** ¿Qué predictor parece tener la relación lineal más fuerte con `mpg`? Indica también el signo de la relación.
@@ -48,20 +49,20 @@ Calcula la matriz de correlaciones.
 
 ```{r}
 # Tu código
+R <- cor(datos) 
+R
 ```
 
 **Preguntas:**
 
-1. ¿Cuál predictor tiene la mayor correlación en valor absoluto con `mpg`?
-2. ¿Existe correlación fuerte entre algunos predictores? ¿Por qué podría ser importante para la regresión?
+1.  ¿Cuál predictor tiene la mayor correlación en valor absoluto con `mpg`? wt con 0.86
+2.  ¿Existe correlación fuerte entre algunos predictores? ¿Por qué podría ser importante para la regresión? Todos los predictores estan bastante correlacionados. Inclusive el menos correlacionado que sería hp con wt tiene 0.65 lo que sigue siendo una correlación media alta
 
 # 2. Modelo de regresión múltiple
 
 Ajusta el modelo:
 
-\[
-mpg=\beta_0+\beta_1 wt+\beta_2 hp+\beta_3 disp+\varepsilon
-\]
+$$mpg=\beta_0+\beta_1 wt+\beta_2 hp+\beta_3 disp+\varepsilon$$
 
 ```{r}
 # Tu código
@@ -71,10 +72,10 @@ mpg=\beta_0+\beta_1 wt+\beta_2 hp+\beta_3 disp+\varepsilon
 
 A partir de `summary()` responde:
 
-1. ¿Cuál es el valor de $R^2$?
-2. ¿Cuál es el $R^2$ ajustado?
-3. ¿El modelo es globalmente significativo? Justifica con la prueba F.
-4. ¿Qué predictores son individualmente significativos con $\alpha=0.05$?
+1.  ¿Cuál es el valor de $R^2$?
+2.  ¿Cuál es el $R^2$ ajustado?
+3.  ¿El modelo es globalmente significativo? Justifica con la prueba F.
+4.  ¿Qué predictores son individualmente significativos con $\alpha=0.05$?
 
 ## 2.2 Interpretación de coeficientes
 
@@ -84,9 +85,7 @@ Escribe la ecuación estimada del modelo e interpreta los coeficientes de `wt` y
 
 Construye manualmente la matriz de diseño $X$ y el vector $Y$. Calcula:
 
-\[
-\hat\beta=(X^TX)^{-1}X^TY
-\]
+$$\hat\beta=(X^TX)^{-1}X^TY$$
 
 ```{r}
 # Tu código
@@ -106,9 +105,9 @@ Obtén un modelo mediante AIC y otro mediante BIC usando selección por pasos en
 
 **Preguntas:**
 
-1. ¿AIC y BIC seleccionan el mismo modelo?
-2. ¿Qué variable o variables se eliminan?
-3. Compara $R^2$ ajustado, AIC y BIC del modelo completo y del modelo seleccionado.
+1.  ¿AIC y BIC seleccionan el mismo modelo?
+2.  ¿Qué variable o variables se eliminan?
+3.  Compara $R^2$ ajustado, AIC y BIC del modelo completo y del modelo seleccionado.
 
 Define como `modelo_final` el modelo que consideres más adecuado y justifica brevemente tu elección.
 
@@ -132,9 +131,9 @@ Adapta `newdata` a las variables que permanezcan en tu `modelo_final`.
 
 Calcula:
 
-1. Predicción puntual de `mpg`.
-2. Intervalo de confianza del 95% para la media esperada.
-3. Intervalo de predicción del 95% para un automóvil individual.
+1.  Predicción puntual de `mpg`.
+2.  Intervalo de confianza del 95% para la media esperada.
+3.  Intervalo de predicción del 95% para un automóvil individual.
 
 **Pregunta:** ¿cuál intervalo es más ancho y por qué?
 
@@ -146,7 +145,7 @@ Calcula el VIF de los predictores del `modelo_final`. Puedes usar `car::vif()` o
 # Tu código
 ```
 
-**Pregunta:** ¿hay evidencia de multicolinealidad importante usando como referencia VIF > 5?
+**Pregunta:** ¿hay evidencia de multicolinealidad importante usando como referencia VIF \> 5?
 
 # 7. Validación de supuestos
 
@@ -203,9 +202,7 @@ Identifica observaciones con:
 
 Usa como referencia:
 
-\[
-h_i>\frac{2p}{n}
-\]
+$$h_i>\frac{2p}{n}$$
 
 donde $p$ es el número de parámetros del modelo, incluyendo el intercepto.
 
@@ -217,9 +214,7 @@ donde $p$ es el número de parámetros del modelo, incluyendo el intercepto.
 
 Usa como referencia:
 
-\[
-D_i>\frac{4}{n}
-\]
+$$D_i>\frac{4}{n}$$
 
 ```{r}
 # Tu código
@@ -227,9 +222,9 @@ D_i>\frac{4}{n}
 
 **Preguntas:**
 
-1. ¿Qué observaciones requieren mayor atención?
-2. ¿Una observación con leverage alto necesariamente es atípica en la respuesta?
-3. ¿Una observación con distancia de Cook alta debería eliminarse automáticamente? Explica.
+1.  ¿Qué observaciones requieren mayor atención?
+2.  ¿Una observación con leverage alto necesariamente es atípica en la respuesta?
+3.  ¿Una observación con distancia de Cook alta debería eliminarse automáticamente? Explica.
 
 # 9. Comparación final
 
@@ -250,8 +245,8 @@ Compara:
 
 Redacta una conclusión breve respondiendo:
 
-1. ¿Qué variables explican mejor `mpg`?
-2. ¿Qué tan bueno es el ajuste del modelo final?
-3. ¿Se cumplen razonablemente los supuestos?
-4. ¿Existen observaciones que deban revisarse por influencia?
-5. ¿Usarías el modelo para predicción? Justifica.
+1.  ¿Qué variables explican mejor `mpg`?
+2.  ¿Qué tan bueno es el ajuste del modelo final?
+3.  ¿Se cumplen razonablemente los supuestos?
+4.  ¿Existen observaciones que deban revisarse por influencia?
+5.  ¿Usarías el modelo para predicción? Justifica.
