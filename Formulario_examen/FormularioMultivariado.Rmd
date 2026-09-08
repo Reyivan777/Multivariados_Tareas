@@ -223,17 +223,20 @@ Biplot: flechas similares = correlación positiva; opuestas = negativa; puntos c
 
 # 5. Análisis factorial (Módulo 1)
 
-Busca factores latentes que expliquen las correlaciones entre variables.
+Busca factores latentes que expliquen la **varianza común/correlaciones** entre variables.
 
-## Correlaciones, Bartlett y KMO
+## Correlaciones, parciales, Bartlett y KMO
 
 ``` r
 Corr <- psych::corr.test(M,adjust="none"); R <- Corr$r; Corr$p
-psych::cortest.bartlett(R,n=nrow(M))    # H0: R=I; p<0.05 favorece FA
-K <- psych::KMO(R); K$MSA; K$MSAi      # KMO global e individual
+parciales <- psych::partial.r(R)             # correlaciones controlando las demás
+psych::cortest.bartlett(R,n=nrow(M))        # H0: R=I; p<0.05 favorece FA
+K <- psych::KMO(R); K$MSA; K$MSAi          # KMO global e individual
 ```
 
-KMO: <0.50 inadecuado; 0.60–0.69 mediocre; 0.70–0.79 aceptable; 0.80–0.89 meritorio; >=0.90 excelente.
+KMO: <0.50 inaceptable; 0.50–0.59 miserable; 0.60–0.69 mediocre; 0.70–0.79 aceptable; 0.80–0.89 meritorio; >=0.90 maravilloso.
+
+Si usan ML, revisar también Mardia en la sección 3; si la normalidad es problemática, comparar con MINRES.
 
 ## Número de factores
 
@@ -243,12 +246,12 @@ psych::fa.parallel(M,fa="fa",fm="ml",n.iter=100)
 psych::fa.parallel(M,fa="fa",fm="minres",n.iter=100)
 ```
 
-Conservar el número sugerido por scree/análisis paralelo según el ejercicio.
+Conservar el número respaldado por scree/análisis paralelo según el ejercicio.
 
-## Ajustar y rotar
+## Ajustar, rotar e interpretar
 
 ``` r
-nf <- 2                                   # sustituir número de factores
+nf <- 2                                      # sustituir número de factores
 fa_ml <- psych::fa(M,nfactors=nf,rotate="varimax",fm="ml")
 fa_min <- psych::fa(M,nfactors=nf,rotate="varimax",fm="minres")
 print(fa_ml$loadings,cutoff=0.30,sort=TRUE)
@@ -256,7 +259,11 @@ fa_ml$communality; fa_ml$uniquenesses; fa_ml$Vaccounted
 psych::fa.diagram(fa_ml)
 ```
 
-Para Quartimax cambiar `rotate="quartimax"`. Carga alta = variable asociada al factor; comunalidad alta = variable bien explicada; unicidad $=1-h^2$.
+Para Quartimax: `rotate="quartimax"`. Carga alta = variable asociada al factor; comunalidad alta = bien explicada; unicidad $=1-h^2$.
+
+Modelo: $Z_i=\lambda_{i1}F_1+\cdots+\lambda_{ik}F_k+e_i$. Los factores pueden intercambiar orden o invertir todos sus signos sin cambiar la solución.
+
+PCA usa varianza total para reducir dimensión; FA explica varianza común mediante factores latentes y separa la unicidad.
 
 # 6. Clustering jerárquico (Módulo 1)
 
