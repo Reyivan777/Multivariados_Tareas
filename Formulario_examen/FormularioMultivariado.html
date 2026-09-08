@@ -1626,270 +1626,405 @@ display: none;
 </div>
 
 
-<div id="matrices-y-estadística" class="section level1">
-<h1>0. Matrices y estadística</h1>
-<div id="crear-matrices" class="section level2">
-<h2>Crear matrices</h2>
-<p>Crear una matriz por filas. Sustituir los valores y <code>nrow</code>
-según el problema.</p>
-<pre class="r"><code>A &lt;- matrix(c(a11, a12, a13,
-              a21, a22, a23,
-              a31, a32, a33),
-            nrow = 3, byrow = TRUE)</code></pre>
-</div>
-<div id="operaciones-básicas-con-matrices" class="section level2">
-<h2>Operaciones básicas con matrices</h2>
-<p>Usar con matrices de dimensiones compatibles.</p>
-<pre class="r"><code>A + B
-4*A + 3*B
-t(A)
-solve(A)
-det(A)
-A %*% B</code></pre>
-<p>Para el producto matricial:</p>
+<div id="base-matrices-y-preparación" class="section level1">
+<h1>0. Base: matrices y preparación</h1>
+<div id="operaciones-con-matrices" class="section level2">
+<h2>Operaciones con matrices</h2>
+<pre class="r"><code>A &lt;- matrix(c(a11,a12,a13,a21,a22,a23,a31,a32,a33), nrow=3, byrow=TRUE)
+A + B; 4*A + 3*B; t(A); solve(A); det(A); A %*% B</code></pre>
 <p><span class="math display">\[A_{m\times n}B_{n\times p}=C_{m\times
-p}\]</span></p>
-<p>Propiedad del determinante usada en la actividad:</p>
-<p><span class="math display">\[\det(A)=\det(A^T)\]</span></p>
+p}, \qquad \det(A)=\det(A^T)\]</span></p>
 </div>
-<div id="seleccionar-variables-y-convertir-a-matriz" class="section level2">
-<h2>Seleccionar variables y convertir a matriz</h2>
-<p>Sustituir <code>x1, x2, ...</code> por las variables cuantitativas
-que se utilizarán.</p>
-<pre class="r"><code>variables &lt;- c(&quot;x1&quot;, &quot;x2&quot;, &quot;x3&quot;, &quot;x4&quot;)
-X &lt;- as.matrix(datos[, variables])
-n &lt;- nrow(X)</code></pre>
-</div>
-<div id="vector-de-medias-poblacional" class="section level2">
-<h2>Vector de medias poblacional</h2>
-<p>Usar cuando se pida calcular el vector de medias mediante notación
-matricial.</p>
-<p><span class="math display">\[\boldsymbol{\mu}=\frac{1}{n}\mathbf{1}^TX\]</span></p>
-<pre class="r"><code>unos &lt;- matrix(1, nrow = n, ncol = 1)
-mu &lt;- (t(unos) %*% X) / n
-mu</code></pre>
-</div>
-<div id="matriz-de-varianzas-y-covarianzas-poblacional" class="section level2">
-<h2>Matriz de varianzas y covarianzas poblacional</h2>
-<p>Centrar primero los datos:</p>
-<p><span class="math display">\[X_c=X-\mathbf{1}\boldsymbol{\mu}\]</span></p>
-<p>Usar <code>n</code> en el denominador cuando el ejercicio trate los
-datos como población.</p>
-<p><span class="math display">\[\Sigma=\frac{1}{n}X_c^TX_c\]</span></p>
-<pre class="r"><code>Sigma &lt;- t(X - unos %*% mu) %*% (X - unos %*% mu) / n
-Sigma</code></pre>
-</div>
-<div id="matriz-de-correlación-a-partir-de-sigma" class="section level2">
-<h2>Matriz de correlación a partir de Sigma</h2>
-<p>Si <span class="math inline">\(D\)</span> contiene las desviaciones
-estándar en su diagonal:</p>
-<p><span class="math display">\[D=\operatorname{diag}(\sqrt{\sigma_{11}},\sqrt{\sigma_{22}},\ldots,\sqrt{\sigma_{pp}})\]</span></p>
-<p>entonces:</p>
+<div id="preparar-matriz-de-datos" class="section level2">
+<h2>Preparar matriz de datos</h2>
+<pre class="r"><code>variables &lt;- c(&quot;x1&quot;,&quot;x2&quot;,&quot;x3&quot;)      # sustituir por variables cuantitativas
+X &lt;- as.matrix(datos[, variables]); n &lt;- nrow(X); p &lt;- ncol(X)
+medias &lt;- colMeans(X); Xc &lt;- sweep(X, 2, medias, &quot;-&quot;)
+S &lt;- cov(X)                            # covarianza muestral
+R &lt;- cor(X)                            # correlación</code></pre>
+<p>Si piden procedimiento matricial:</p>
+<p><span class="math display">\[\bar X=\frac{1}{n}\mathbf1^TX,\qquad
+S=\frac{1}{n-1}X_c^TX_c\]</span></p>
+<pre class="r"><code>unos &lt;- matrix(1,n,1); mu &lt;- t(unos)%*%X/n
+S_manual &lt;- t(Xc)%*%Xc/(n-1)</code></pre>
+<p>Correlación desde covarianza poblacional:</p>
 <p><span class="math display">\[R=D^{-1}\Sigma D^{-1}\]</span></p>
-<p>Construirla a partir de las desviaciones estándar de la diagonal de
-<code>Sigma</code>.</p>
-<pre class="r"><code>varianzas &lt;- diag(Sigma)
-desviaciones &lt;- sqrt(varianzas)
-D_inv &lt;- diag(1 / desviaciones)
-R &lt;- D_inv %*% Sigma %*% D_inv
-R</code></pre>
+<pre class="r"><code>Sigma &lt;- t(Xc)%*%Xc/n
+D_inv &lt;- diag(1/sqrt(diag(Sigma))); R &lt;- D_inv%*%Sigma%*%D_inv</code></pre>
 </div>
 <div id="valores-y-vectores-propios" class="section level2">
 <h2>Valores y vectores propios</h2>
-<p>Para una matriz <span class="math inline">\(M\)</span>, un vector
-propio <span class="math inline">\(\mathbf{v}\)</span> y su valor propio
-<span class="math inline">\(\lambda\)</span> cumplen:</p>
-<p><span class="math display">\[M\mathbf{v}=\lambda\mathbf{v}\]</span></p>
-<p>Aplicar <code>eigen()</code> a la matriz de covarianzas o de
-correlación según lo que pida el problema.</p>
-<pre class="r"><code>eigen_cov &lt;- eigen(Sigma)
-eigen_cov$values
-eigen_cov$vectors
-
-eigen_cor &lt;- eigen(R)
-eigen_cor$values
-eigen_cor$vectors</code></pre>
+<pre class="r"><code>eig &lt;- eigen(M)                        # M = S o R
+eig$values; eig$vectors</code></pre>
 </div>
+</div>
+<div id="normalidad-univariada" class="section level1">
+<h1>1. Normalidad univariada</h1>
+<div id="descripción-y-prueba" class="section level2">
+<h2>Descripción y prueba</h2>
+<p>Normal: sesgo <span class="math inline">\(\approx0\)</span>, curtosis
+<span class="math inline">\(\approx3\)</span>. En Shapiro/Jarque-Bera:
+<span class="math inline">\(p&lt;0.05\)</span> rechaza normalidad.</p>
+<pre class="r"><code>moments::skewness(x); moments::kurtosis(x)
+shapiro.test(x); moments::jarque.test(x)
+qqnorm(x); qqline(x)
+hist(x, probability=TRUE); lines(density(x))</code></pre>
+</div>
+<div id="box-cox" class="section level2">
+<h2>Box-Cox</h2>
+<p>Usar con respuesta positiva; elegir <span class="math inline">\(\lambda\)</span> donde la log-verosimilitud sea
+máxima.</p>
+<pre class="r"><code>modelo &lt;- lm(y ~ x, data=datos)
+bc &lt;- MASS::boxcox(modelo, lambda=seq(-2,2,0.01), plotit=TRUE)
+lambda &lt;- bc$x[which.max(bc$y)]
+y_bc &lt;- if(abs(lambda)&lt;1e-8) log(datos$y) else (datos$y^lambda-1)/lambda
+shapiro.test(y_bc)</code></pre>
+</div>
+<div id="yeo-johnson" class="section level2">
+<h2>Yeo-Johnson</h2>
+<p>Permite trabajar con valores cero/negativos; sustituir <code>x</code>
+por la variable.</p>
+<pre class="r"><code>lambdas &lt;- seq(-2,2,0.001)
+pval &lt;- sapply(lambdas, function(L){
+  z &lt;- bestNormalize::yeojohnson(x, lambda=L, standardize=FALSE)
+  shapiro.test(z)$p.value
+})
+lambda_yj &lt;- lambdas[which.max(pval)]</code></pre>
+</div>
+</div>
+<div id="intervalos-de-confianza-y-predicción" class="section level1">
+<h1>2. Intervalos de confianza y predicción</h1>
+<p>Confianza = media esperada; predicción = una observación individual
+(más ancho).</p>
+<pre class="r"><code>modelo &lt;- lm(y ~ x, data=datos)
+nuevo &lt;- data.frame(x=c(valor1,valor2))                # sustituir valores
+predict(modelo, newdata=nuevo, interval=&quot;confidence&quot;, level=0.95)
+predict(modelo, newdata=nuevo, interval=&quot;prediction&quot;, level=0.95)</code></pre>
+<p>Para bandas:</p>
+<pre class="r"><code>nuevo_x &lt;- data.frame(x=seq(min(datos$x),max(datos$x),length.out=200))
+IC &lt;- predict(modelo,nuevo_x,interval=&quot;confidence&quot;)
+IP &lt;- predict(modelo,nuevo_x,interval=&quot;prediction&quot;)</code></pre>
 </div>
 <div id="normal-multivariada" class="section level1">
-<h1>1. Normal multivariada</h1>
-<div id="probabilidad-acumulada-bivariada" class="section level2">
-<h2>Probabilidad acumulada bivariada</h2>
+<h1>3. Normal multivariada</h1>
+<div id="probabilidad-bivariada" class="section level2">
+<h2>Probabilidad bivariada</h2>
 <p>Para <span class="math inline">\(X\sim N_2(\mu,\Sigma)\)</span> y
-calcular <span class="math inline">\(P(X_1\le x_1, X_2\le x_2)\)</span>,
-sustituir <code>mu</code>, <code>Sigma</code> y <code>x</code>.</p>
-<p><span class="math display">\[X\sim
-N_p(\boldsymbol{\mu},\Sigma)\]</span></p>
-<pre class="r"><code>mu &lt;- c(mu1, mu2)
-Sigma &lt;- matrix(c(var1, cov12,
-                  cov12, var2),
-                nrow = 2, byrow = TRUE)
-x &lt;- c(x1, x2)
-mnormt::pmnorm(x, mean = mu, varcov = Sigma)</code></pre>
+<span class="math inline">\(P(X_1\le x_1,X_2\le x_2)\)</span>:</p>
+<pre class="r"><code>mu &lt;- c(mu1,mu2)
+Sigma &lt;- matrix(c(var1,cov12,cov12,var2),2,byrow=TRUE)
+mnormt::pmnorm(c(x1,x2), mean=mu, varcov=Sigma)</code></pre>
 </div>
-<div id="superficie-y-contornos-de-una-normal-bivariada" class="section level2">
-<h2>Superficie y contornos de una normal bivariada</h2>
-<p>Usar para visualizar la densidad. Sustituir <code>mu</code> y
-<code>Sigma</code>. La superficie con <code>plotly</code> es
-interactiva: permite rotar, acercar y consultar coordenadas.</p>
-<pre class="r"><code>sd1 &lt;- sqrt(Sigma[1,1])
-sd2 &lt;- sqrt(Sigma[2,2])
-x1 &lt;- seq(mu[1]-4*sd1, mu[1]+4*sd1, length.out=100)
-x2 &lt;- seq(mu[2]-4*sd2, mu[2]+4*sd2, length.out=100)
-
-f &lt;- function(x1, x2) {
-  mnormt::dmnorm(cbind(x1, x2), mean=mu, varcov=Sigma)
-}
-
-z &lt;- outer(x1, x2, f)
-
-plotly::plot_ly(
-  x = x1,
-  y = x2,
-  z = t(z)
-) |&gt;
-  plotly::add_surface() |&gt;
-  plotly::layout(
-    scene = list(
-      xaxis = list(title = &quot;X1&quot;),
-      yaxis = list(title = &quot;X2&quot;),
-      zaxis = list(title = &quot;Densidad&quot;)
-    )
-  )
-
-contour(x1, x2, z,
-        xlab = &quot;X1&quot;,
-        ylab = &quot;X2&quot;)</code></pre>
-</div>
-<div id="transformación-lineal-de-una-normal-multivariada" class="section level2">
-<h2>Transformación lineal de una normal multivariada</h2>
-<p>Si</p>
-<p><span class="math display">\[Y=AX+d\]</span></p>
-<p>y <span class="math inline">\(X\sim N_p(\mu_X,\Sigma_X)\)</span>,
-entonces:</p>
-<p><span class="math display">\[Y\sim
-N(A\mu_X+d,\;A\Sigma_XA^T)\]</span></p>
-<pre class="r"><code>mu_y &lt;- A %*% mu_x + d
-Sigma_y &lt;- A %*% Sigma_x %*% t(A)</code></pre>
-</div>
-<div id="combinación-lineal-de-variables-normales" class="section level2">
-<h2>Combinación lineal de variables normales</h2>
-<p>Para</p>
-<p><span class="math display">\[Z=aY+c\]</span></p>
-<p>la media y varianza son:</p>
-<p><span class="math display">\[\mu_Z=a\mu_Y+c\]</span></p>
-<p><span class="math display">\[\operatorname{Var}(Z)=a\Sigma_Ya^T\]</span></p>
-<pre class="r"><code>a &lt;- matrix(c(a1, a2), nrow = 1)
-c &lt;- constante
-mu_z &lt;- a %*% mu_y + c
-var_z &lt;- a %*% Sigma_y %*% t(a)</code></pre>
-</div>
-<div id="qq-plot-con-distancias-de-mahalanobis" class="section level2">
-<h2>QQ-Plot con distancias de Mahalanobis</h2>
-<p>Usar para evaluar gráficamente normalidad multivariada. Sustituir
-<code>M</code> por las variables cuantitativas.</p>
-<p><span class="math display">\[d_i^2=(x_i-\bar{x})^TS^{-1}(x_i-\bar{x})\]</span></p>
-<pre class="r"><code>p &lt;- ncol(M)
-media &lt;- colMeans(M)
-S &lt;- cov(M)
-d2M &lt;- mahalanobis(M, media, S)
-teoricos &lt;- qchisq(((1:nrow(M))-0.5)/nrow(M), df=p)
-plot(teoricos, sort(d2M),
-     xlab=&quot;Cuantiles teóricos Chi-cuadrada&quot;,
-     ylab=&quot;Distancias de Mahalanobis&quot;)
-abline(a=0, b=1, col=&quot;red&quot;)</code></pre>
-</div>
-<div id="prueba-de-mardia" class="section level2">
-<h2>Prueba de Mardia</h2>
-<p>Hipótesis:</p>
-<p><span class="math display">\[H_0:\text{ los datos siguen una
-distribución normal multivariada}\]</span></p>
-<p><span class="math display">\[H_1:\text{ los datos no siguen una
-distribución normal multivariada}\]</span></p>
-<p>Con <span class="math inline">\(\alpha=0.05\)</span>: si
-<code>p.value &lt; 0.05</code>, rechazar <span class="math inline">\(H_0\)</span>.</p>
-<pre class="r"><code>resultado_mardia &lt;- MVN::mvn(data = M, mvn_test = &quot;mardia&quot;)
-resultado_mardia</code></pre>
-</div>
-<div id="normalidad-univariada" class="section level2">
-<h2>Normalidad univariada</h2>
-<p>Revisar cada variable con Shapiro-Wilk.</p>
-<pre class="r"><code>shapiro.test(M[,1])
-shapiro.test(M[,2])</code></pre>
-<p>Con <span class="math inline">\(\alpha=0.05\)</span>: si
-<code>p.value &lt; 0.05</code>, rechazar normalidad para esa
-variable.</p>
-</div>
-</div>
-<div id="combinaciones-lineales-y-validación" class="section level1">
-<h1>2. Combinaciones lineales y validación</h1>
-<div id="matriz-de-covarianzas-muestral" class="section level2">
-<h2>Matriz de covarianzas muestral</h2>
-<p>Para datos muestrales usar <span class="math inline">\(n-1\)</span>:</p>
-<p><span class="math display">\[S=\frac{1}{n-1}X_c^TX_c\]</span></p>
-<pre class="r"><code>medias &lt;- colMeans(X)
-Xc &lt;- sweep(X, 2, medias, &quot;-&quot;)
-n &lt;- nrow(X)
-S &lt;- t(Xc) %*% Xc / (n - 1)</code></pre>
-<p>Equivalente directo:</p>
-<pre class="r"><code>S &lt;- cov(X)</code></pre>
-</div>
-<div id="combinaciones-lineales" class="section level2">
-<h2>Combinaciones lineales</h2>
+<div id="transformaciones-y-combinaciones-lineales" class="section level2">
+<h2>Transformaciones y combinaciones lineales</h2>
+<p>Si <span class="math inline">\(Y=AX+d\)</span>: <span class="math inline">\(\mu_Y=A\mu_X+d\)</span>, <span class="math inline">\(\Sigma_Y=A\Sigma_XA^T\)</span>.</p>
+<pre class="r"><code>mu_y &lt;- A%*%mu_x + d
+Sigma_y &lt;- A%*%Sigma_x%*%t(A)</code></pre>
 <p>Para <span class="math inline">\(b^TX\)</span> y <span class="math inline">\(c^TX\)</span>:</p>
-<p><span class="math display">\[E(b^TX)=b^T\mu\]</span></p>
-<p><span class="math display">\[Var(b^TX)=b^TSb\]</span></p>
-<p><span class="math display">\[Var(c^TX)=c^TSc\]</span></p>
-<p><span class="math display">\[Cov(b^TX,c^TX)=b^TSc\]</span></p>
-<pre class="r"><code>bX &lt;- X %*% b
-cX &lt;- X %*% c
+<p><span class="math display">\[E(b^TX)=b^T\mu,\quad
+Var(b^TX)=b^TSb,\quad Cov(b^TX,c^TX)=b^TSc\]</span></p>
+<pre class="r"><code>t(b)%*%medias; t(b)%*%S%*%b; t(b)%*%S%*%c</code></pre>
+<p>Covarianza distinta de 0 implica dependencia; en normal multivariada,
+covarianza 0 implica independencia.</p>
+</div>
+<div id="mardia-henze-zirkler" class="section level2">
+<h2>Mardia / Henze-Zirkler</h2>
+<p><span class="math inline">\(H_0\)</span>: normal multivariada. <span class="math inline">\(p&lt;0.05\)</span> → rechazar <span class="math inline">\(H_0\)</span>.</p>
+<pre class="r"><code>mardia &lt;- MVN::mvn(data=M, mvn_test=&quot;mardia&quot;)
+hz &lt;- MVN::mvn(data=M, mvn_test=&quot;hz&quot;)
+mardia$multivariate_normality</code></pre>
+</div>
+<div id="mahalanobis-y-contorno" class="section level2">
+<h2>Mahalanobis y contorno</h2>
+<p><span class="math display">\[d_i^2=(x_i-\bar x)^TS^{-1}(x_i-\bar
+x)\]</span></p>
+<pre class="r"><code>d2 &lt;- mahalanobis(X,colMeans(X),cov(X))
+limite &lt;- qchisq(prob,df=ncol(X))       # prob = 0.50, 0.95, etc.
+dentro &lt;- d2 &lt;= limite; sum(dentro); mean(dentro)</code></pre>
+</div>
+<div id="diagrama-chi-cuadrado" class="section level2">
+<h2>Diagrama Chi-cuadrado</h2>
+<pre class="r"><code>n &lt;- nrow(X); p &lt;- ncol(X)
+chi2 &lt;- qchisq(((1:n)-0.5)/n,df=p)
+plot(chi2,sort(d2),xlab=&quot;Chi-cuadrado&quot;,ylab=&quot;Mahalanobis&quot;,pch=19)
+abline(0,1)</code></pre>
+<p>Puntos aproximadamente lineales → compatible con normalidad
+multivariada.</p>
+</div>
+<div id="varianza-generalizada-singularidad" class="section level2">
+<h2>Varianza generalizada / singularidad</h2>
+<pre class="r"><code>e &lt;- eigen(S); det(S); e$values; prod(e$values)</code></pre>
+<p><span class="math inline">\(|S|\approx0\)</span> y valor propio <span class="math inline">\(\approx0\)</span> → posible dependencia
+lineal.</p>
+</div>
+</div>
+<div id="componentes-principales-pca" class="section level1">
+<h1>4. Componentes principales (PCA)</h1>
+<div id="elegir-matriz" class="section level2">
+<h2>Elegir matriz</h2>
+<p>Covarianzas si escalas comparables; correlaciones si unidades/escalas
+distintas.</p>
+<pre class="r"><code>S &lt;- cov(X); R &lt;- cor(X); M &lt;- R        # cambiar por S cuando corresponda
+eig &lt;- eigen(M); lambda &lt;- eig$values; V &lt;- eig$vectors
+prop &lt;- lambda/sum(lambda); acum &lt;- cumsum(prop)
+data.frame(CP=1:length(lambda),Eigenvalue=lambda,Var=100*prop,Acum=100*acum)</code></pre>
+<p>Con correlaciones, <span class="math inline">\(\sum\lambda=p\)</span>. Kaiser: conservar
+principalmente <span class="math inline">\(\lambda&gt;1\)</span>;
+complementar con scree y varianza acumulada.</p>
+</div>
+<div id="variables-importantes-y-scores" class="section level2">
+<h2>Variables importantes y scores</h2>
+<pre class="r"><code>rownames(V) &lt;- colnames(X)
+sort(abs(V[,1]),decreasing=TRUE)         # variables que dominan CP1
+Xtrab &lt;- scale(X)                        # correlaciones; para S usar scale(X,scale=FALSE)
+scores &lt;- Xtrab%*%V
+plot(scores[,1],scores[,2],xlab=&quot;CP1&quot;,ylab=&quot;CP2&quot;,pch=19)</code></pre>
+<p>Mayor <span class="math inline">\(|coeficiente|\)</span> → mayor
+influencia. El signo completo de un eigenvector puede invertirse sin
+cambiar PCA.</p>
+</div>
+<div id="pca-directo-y-gráficos" class="section level2">
+<h2>PCA directo y gráficos</h2>
+<pre class="r"><code>cp &lt;- princomp(X,cor=TRUE,scores=TRUE)   # cor=FALSE para covarianzas
+summary(cp); round(cp$loadings[,1:2],3); head(cp$scores[,1:2])
 
-t(b) %*% medias
-t(c) %*% medias
+pca &lt;- FactoMineR::PCA(X,scale.unit=TRUE,ncp=ncol(X),graph=FALSE)
+factoextra::fviz_screeplot(pca,addlabels=TRUE)
+factoextra::fviz_pca_ind(pca,geom.ind=&quot;point&quot;)
+factoextra::fviz_pca_var(pca,repel=TRUE)
+factoextra::fviz_pca_biplot(pca,geom.ind=&quot;point&quot;,label=&quot;var&quot;,repel=TRUE)</code></pre>
+<p>Biplot: flechas similares = correlación positiva; opuestas =
+negativa; puntos cercanos = observaciones similares.</p>
+</div>
+</div>
+<div id="análisis-factorial-módulo-1" class="section level1">
+<h1>5. Análisis factorial (Módulo 1)</h1>
+<p>Busca factores latentes que expliquen la <strong>varianza
+común/correlaciones</strong> entre variables.</p>
+<div id="correlaciones-parciales-bartlett-y-kmo" class="section level2">
+<h2>Correlaciones, parciales, Bartlett y KMO</h2>
+<pre class="r"><code>Corr &lt;- psych::corr.test(M,adjust=&quot;none&quot;); R &lt;- Corr$r; Corr$p
+parciales &lt;- psych::partial.r(R)             # correlaciones controlando las demás
+psych::cortest.bartlett(R,n=nrow(M))        # H0: R=I; p&lt;0.05 favorece FA
+K &lt;- psych::KMO(R); K$MSA; K$MSAi          # KMO global e individual</code></pre>
+<p>KMO: &lt;0.50 inaceptable; 0.50–0.59 miserable; 0.60–0.69 mediocre;
+0.70–0.79 aceptable; 0.80–0.89 meritorio; &gt;=0.90 maravilloso.</p>
+<p>Si usan ML, revisar también Mardia en la sección 3; si la normalidad
+es problemática, comparar con MINRES.</p>
+</div>
+<div id="número-de-factores" class="section level2">
+<h2>Número de factores</h2>
+<pre class="r"><code>psych::scree(M,factors=TRUE,pc=FALSE)
+psych::fa.parallel(M,fa=&quot;fa&quot;,fm=&quot;ml&quot;,n.iter=100)
+psych::fa.parallel(M,fa=&quot;fa&quot;,fm=&quot;minres&quot;,n.iter=100)</code></pre>
+<p>Conservar el número respaldado por scree/análisis paralelo según el
+ejercicio.</p>
+</div>
+<div id="ajustar-rotar-e-interpretar" class="section level2">
+<h2>Ajustar, rotar e interpretar</h2>
+<pre class="r"><code>nf &lt;- 2                                      # sustituir número de factores
+fa_ml &lt;- psych::fa(M,nfactors=nf,rotate=&quot;varimax&quot;,fm=&quot;ml&quot;)
+fa_min &lt;- psych::fa(M,nfactors=nf,rotate=&quot;varimax&quot;,fm=&quot;minres&quot;)
+print(fa_ml$loadings,cutoff=0.30,sort=TRUE)
+fa_ml$communality; fa_ml$uniquenesses; fa_ml$Vaccounted
+psych::fa.diagram(fa_ml)</code></pre>
+<p>Para Quartimax: <code>rotate=&quot;quartimax&quot;</code>. Carga alta =
+variable asociada al factor; comunalidad alta = bien explicada; unicidad
+<span class="math inline">\(=1-h^2\)</span>.</p>
+<p>Modelo: <span class="math inline">\(Z_i=\lambda_{i1}F_1+\cdots+\lambda_{ik}F_k+e_i\)</span>.
+Los factores pueden intercambiar orden o invertir todos sus signos sin
+cambiar la solución.</p>
+<p>PCA usa varianza total para reducir dimensión; FA explica varianza
+común mediante factores latentes y separa la unicidad.</p>
+</div>
+</div>
+<div id="clustering-jerárquico-módulo-1" class="section level1">
+<h1>6. Clustering jerárquico (Módulo 1)</h1>
+<div id="desde-datos-o-matriz-de-distancias" class="section level2">
+<h2>Desde datos o matriz de distancias</h2>
+<p>Estandarizar cuando las variables tengan escalas distintas.</p>
+<pre class="r"><code>Xz &lt;- scale(X); d &lt;- dist(Xz)             # si ya dan matriz M: d &lt;- as.dist(M)
+J_avg &lt;- hclust(d,method=&quot;average&quot;)       # distancia promedio
+J_single &lt;- hclust(d,method=&quot;single&quot;)    # vecino más cercano
+plot(J_avg,hang=-1); plot(J_single,hang=-1)</code></pre>
+<p>Single: distancia mínima entre dos conglomerados. Average: promedio
+de todas las distancias entre ambos grupos.</p>
+</div>
+<div id="obtener-grupos" class="section level2">
+<h2>Obtener grupos</h2>
+<pre class="r"><code>grupo &lt;- cutree(J_avg,k=2)                # sustituir k
+table(grupo)</code></pre>
+</div>
+</div>
+<div id="clustering-no-jerárquico-k-means-módulo-1" class="section level1">
+<h1>7. Clustering no jerárquico: K-means (Módulo 1)</h1>
+<p>K-means agrupa observaciones; no predice una variable. Estandarizar
+si hay escalas diferentes.</p>
+<pre class="r"><code>M1 &lt;- na.omit(M); Mz &lt;- scale(M1)
+set.seed(123)
+factoextra::fviz_nbclust(Mz,kmeans,method=&quot;wss&quot;,k.max=8)        # codo
+factoextra::fviz_nbclust(Mz,kmeans,method=&quot;silhouette&quot;,k.max=8) # silueta</code></pre>
+<p>Mayor silueta = mejor separación. Elegir <code>k</code> usando codo +
+silueta.</p>
+<pre class="r"><code>k &lt;- 2                                      # sustituir k elegido
+km &lt;- kmeans(Mz,centers=k,nstart=25)
+km$centers; table(km$cluster)
+factoextra::fviz_cluster(km,data=Mz,show.clust.cent=TRUE)
+aggregate(M1,by=list(Cluster=km$cluster),FUN=mean) # interpretar en escala original</code></pre>
+</div>
+<div id="regresión-lineal-módulo-2" class="section level1">
+<h1>8. Regresión lineal (Módulo 2)</h1>
+<div id="ajuste-y-mínimos-cuadrados" class="section level2">
+<h2>Ajuste y mínimos cuadrados</h2>
+<p><span class="math display">\[Y=X\beta+\varepsilon,\qquad
+\hat\beta=(X^TX)^{-1}X^TY\]</span></p>
+<pre class="r"><code>modelo &lt;- lm(y ~ x1 + x2 + x3,data=datos)  # sustituir respuesta/predictores
+summary(modelo); coef(modelo)</code></pre>
+<p>Procedimiento matricial si lo piden:</p>
+<pre class="r"><code>Y &lt;- as.matrix(datos$y); X &lt;- cbind(1,datos$x1,datos$x2,datos$x3)
+beta_hat &lt;- solve(t(X)%*%X)%*%t(X)%*%Y
+Y_hat &lt;- X%*%beta_hat; residuos &lt;- Y-Y_hat; SSE &lt;- sum(residuos^2)</code></pre>
+<p>En <code>summary</code>: <span class="math inline">\(R^2\)</span> =
+variación explicada; <span class="math inline">\(R^2_{aj}\)</span>
+penaliza predictores; F global prueba si al menos un predictor aporta; p
+individual prueba <span class="math inline">\(H_0:\beta_i=0\)</span>.</p>
+<pre class="r"><code>summary(modelo)$r.squared; summary(modelo)$adj.r.squared
+coef(summary(modelo))
+F &lt;- summary(modelo)$fstatistic
+pf(F[1],F[2],F[3],lower.tail=FALSE)        # p de prueba F global</code></pre>
+</div>
+<div id="selección-aicbic" class="section level2">
+<h2>Selección AIC/BIC</h2>
+<pre class="r"><code>modelo_AIC &lt;- step(modelo,direction=&quot;both&quot;,trace=0)
+modelo_BIC &lt;- step(modelo,direction=&quot;both&quot;,trace=0,k=log(nrow(datos)))
+formula(modelo_AIC); formula(modelo_BIC)
+AIC(modelo); BIC(modelo)</code></pre>
+<p>Menor AIC/BIC favorece el modelo, comparando modelos ajustados sobre
+las mismas observaciones.</p>
+</div>
+<div id="multicolinealidad" class="section level2">
+<h2>Multicolinealidad</h2>
+<p><span class="math display">\[VIF_j=\frac{1}{1-R_j^2}\]</span></p>
+<pre class="r"><code>aux &lt;- lm(x1 ~ x2 + x3,data=datos)          # repetir cambiando predictor respuesta
+VIF_x1 &lt;- 1/(1-summary(aux)$r.squared)</code></pre>
+<p>VIF &lt; 5: sin problema importante según el criterio usado en las
+actividades.</p>
+</div>
+<div id="validación-de-residuos" class="section level2">
+<h2>Validación de residuos</h2>
+<pre class="r"><code>res &lt;- residuals(modelo); fit &lt;- fitted(modelo)
+shapiro.test(res)                           # H0: normalidad
+plot(fit,res); abline(h=0)                  # homocedasticidad: sin patrón/abanico
+plot(res,type=&quot;b&quot;); abline(h=0)            # independencia visual
+DW &lt;- sum(diff(res)^2)/sum(res^2)           # cerca de 2 = sin señal fuerte de autocorrelación
+par(mfrow=c(2,2)); plot(modelo); par(mfrow=c(1,1))</code></pre>
+<p>Breusch-Pagan manual usado en la actividad:</p>
+<pre class="r"><code>e2 &lt;- res^2; bp &lt;- lm(e2 ~ x1 + x2 + x3,data=datos)
+LM &lt;- nrow(datos)*summary(bp)$r.squared
+p_BP &lt;- pchisq(LM,df=3,lower.tail=FALSE)    # p&lt;0.05 indica heterocedasticidad</code></pre>
+</div>
+<div id="atípicos-e-influyentes" class="section level2">
+<h2>Atípicos e influyentes</h2>
+<pre class="r"><code>rs &lt;- rstandard(modelo); rt &lt;- rstudent(modelo)
+which(abs(rs)&gt;2); which(abs(rt)&gt;3)
 
-t(b) %*% S %*% b
-t(c) %*% S %*% c
-t(b) %*% S %*% c</code></pre>
-<p>Si la covarianza es distinta de cero, las combinaciones no son
-independientes. Si provienen de una normal multivariada, covarianza cero
-implica independencia.</p>
+hat &lt;- hatvalues(modelo); lim_hat &lt;- 2*length(coef(modelo))/nrow(datos)
+which(hat&gt;lim_hat)
+
+cook &lt;- cooks.distance(modelo); lim_cook &lt;- 4/nrow(datos)
+which(cook&gt;lim_cook)
+car::influencePlot(modelo,id=TRUE)</code></pre>
+<p>Residuo grande = atípico en <span class="math inline">\(Y\)</span>;
+leverage alto = predictor extremo; Cook alto = observación con
+influencia sobre el modelo. Revisar antes de eliminar.</p>
 </div>
-<div id="varianza-generalizada-y-singularidad" class="section level2">
-<h2>Varianza generalizada y singularidad</h2>
-<p>La varianza generalizada es:</p>
-<p><span class="math display">\[GV=|S|\]</span></p>
-<p>También:</p>
-<p><span class="math display">\[|S|=\prod_{j=1}^{p}\lambda_j\]</span></p>
-<pre class="r"><code>det(S)
-eigen_S &lt;- eigen(S)
-eigen_S$values
-eigen_S$vectors
-prod(eigen_S$values)</code></pre>
-<p>Si <span class="math inline">\(|S|\approx0\)</span> y aparece un
-valor propio cercano a cero, <span class="math inline">\(S\)</span> es
-singular y existe dependencia lineal entre las variables.</p>
 </div>
-<div id="prueba-de-henze-zirkler" class="section level2">
-<h2>Prueba de Henze-Zirkler</h2>
-<p>Hipótesis:</p>
-<p><span class="math display">\[H_0:\text{ los datos siguen una
-distribución normal multivariada}\]</span></p>
-<p><span class="math display">\[H_1:\text{ los datos no siguen una
-distribución normal multivariada}\]</span></p>
-<pre class="r"><code>resultado_hz &lt;- MVN::mvn(data = M, mvn_test = &quot;hz&quot;)
-resultado_hz</code></pre>
-<p>Con <span class="math inline">\(\alpha=0.05\)</span>: si
-<code>p.value &lt; 0.05</code>, rechazar <span class="math inline">\(H_0\)</span>.</p>
+<div id="análisis-discriminante-lineal---lda-módulo-2" class="section level1">
+<h1>9. Análisis discriminante lineal - LDA (Módulo 2)</h1>
+<p>Respuesta categórica; LDA construye combinaciones lineales para
+separar grupos.</p>
+<div id="ajustar-modelo" class="section level2">
+<h2>Ajustar modelo</h2>
+<pre class="r"><code>datos$grupo &lt;- factor(datos$grupo)          # respuesta categórica
+pred &lt;- c(&quot;x1&quot;,&quot;x2&quot;,&quot;x3&quot;)
+form &lt;- as.formula(paste(&quot;grupo ~&quot;,paste(pred,collapse=&quot; + &quot;)))
+modelo_lda &lt;- MASS::lda(form,data=datos)
+modelo_lda$prior; modelo_lda$means; modelo_lda$scaling</code></pre>
+<p>Máximo número de funciones discriminantes: <span class="math inline">\(\min(p,g-1)\)</span>.</p>
 </div>
-<div id="contorno-de-probabilidad-con-mahalanobis" class="section level2">
-<h2>Contorno de probabilidad con Mahalanobis</h2>
-<p>Para un contorno de probabilidad <code>prob</code> en <span class="math inline">\(p\)</span> dimensiones:</p>
-<p><span class="math display">\[d_i^2\leq\chi^2_{p,\,prob}\]</span></p>
-<pre class="r"><code>d2 &lt;- mahalanobis(X, colMeans(X), cov(X))
-limite &lt;- qchisq(prob, df = ncol(X))
-dentro &lt;- d2 &lt;= limite
-sum(dentro)
-mean(dentro)</code></pre>
+<div id="predicción-y-funciones-discriminantes" class="section level2">
+<h2>Predicción y funciones discriminantes</h2>
+<pre class="r"><code>pred_lda &lt;- predict(modelo_lda,newdata=datos)
+pred_lda$class                              # clase predicha
+head(pred_lda$x)                            # scores LD1, LD2, ...</code></pre>
+<p>Coeficientes mayores en valor absoluto aportan más a cada LD; el
+signo indica dirección.</p>
+</div>
+<div id="loocv-y-matriz-de-confusión" class="section level2">
+<h2>LOOCV y matriz de confusión</h2>
+<pre class="r"><code>cv &lt;- MASS::lda(form,data=datos,CV=TRUE)
+tabla &lt;- table(Real=datos$grupo,Predicha=cv$class)
+tabla
+precision &lt;- sum(diag(tabla))/sum(tabla); error &lt;- 1-precision
+acierto_clase &lt;- diag(tabla)/rowSums(tabla)</code></pre>
+<p>Diagonal = clasificaciones correctas. Revisar precisión global y por
+clase si hay desbalance.</p>
+</div>
+<div id="supuestos-de-lda" class="section level2">
+<h2>Supuestos de LDA</h2>
+<p>Normalidad multivariada dentro de cada grupo e igualdad de matrices
+de covarianzas.</p>
+<pre class="r"><code>for(g in levels(datos$grupo)){
+  Xg &lt;- datos[datos$grupo==g,pred]
+  print(MVN::mvn(Xg,mvn_test=&quot;mardia&quot;)$multivariate_normality)
+}
+biotools::boxM(datos[,pred],datos$grupo)    # H0: matrices de covarianza iguales</code></pre>
+<p>En ambas pruebas, <span class="math inline">\(p&lt;0.05\)</span>
+implica que el supuesto correspondiente no se cumple.</p>
+</div>
+</div>
+<div id="regresión-logística-módulo-2" class="section level1">
+<h1>10. Regresión logística (Módulo 2)</h1>
+<p>Respuesta binaria; modela <span class="math inline">\(p=P(Y=1)\)</span> mediante el logit.</p>
+<p><span class="math display">\[\log\left(\frac{p}{1-p}\right)=\beta_0+\beta_1X_1+\cdots+\beta_pX_p\]</span></p>
+<div id="ajustar-e-interpretar" class="section level2">
+<h2>Ajustar e interpretar</h2>
+<pre class="r"><code>modelo_log &lt;- glm(y ~ x1 + x2,data=datos,family=binomial)
+summary(modelo_log)
+coef(modelo_log); exp(coef(modelo_log))     # odds ratios</code></pre>
+<p><span class="math inline">\(e^{\beta_j}\)</span> = factor
+multiplicativo de los odds por una unidad adicional de <span class="math inline">\(X_j\)</span>, manteniendo las demás
+constantes.</p>
+</div>
+<div id="probabilidades-y-clasificación" class="section level2">
+<h2>Probabilidades y clasificación</h2>
+<pre class="r"><code>prob &lt;- predict(modelo_log,newdata=prueba,type=&quot;response&quot;)
+pred &lt;- ifelse(prob&gt;0.5,&quot;1&quot;,&quot;0&quot;)          # adaptar etiquetas/umbral
+pred &lt;- factor(pred,levels=levels(prueba$y))
+tabla &lt;- table(Real=prueba$y,Predicho=pred)
+tabla</code></pre>
+</div>
+<div id="métricas-binarias" class="section level2">
+<h2>Métricas binarias</h2>
+<p>Adaptar cuál categoría es la positiva.</p>
+<pre class="r"><code>exactitud &lt;- sum(diag(tabla))/sum(tabla); error &lt;- 1-exactitud
+sensibilidad &lt;- tabla[&quot;1&quot;,&quot;1&quot;]/sum(tabla[&quot;1&quot;,])
+especificidad &lt;- tabla[&quot;0&quot;,&quot;0&quot;]/sum(tabla[&quot;0&quot;,])
+c(Exactitud=exactitud,Error=error,Sensibilidad=sensibilidad,Especificidad=especificidad)</code></pre>
+</div>
+<div id="significancia-global-y-validación" class="section level2">
+<h2>Significancia global y validación</h2>
+<pre class="r"><code>nulo &lt;- glm(y ~ 1,data=datos,family=binomial)
+anova(nulo,modelo_log,test=&quot;Chisq&quot;)         # p&lt;0.05: predictores mejoran al nulo
+
+res &lt;- residuals(modelo_log,type=&quot;deviance&quot;)
+plot(seq_along(res),res); abline(h=0,lty=2) # revisar independencia/patrones</code></pre>
+<p>Linealidad del predictor continuo con el logit (Box-Tidwell; requiere
+valores positivos):</p>
+<pre class="r"><code>datos$x1_pos &lt;- datos$x1-min(datos$x1)+0.001
+car::boxTidwell(y_num ~ x1_pos,data=datos)  # p&lt;0.05 sugiere falta de linealidad</code></pre>
+<p>Con un solo predictor no puede haber multicolinealidad entre
+predictores; con varios, revisar VIF como en regresión lineal.</p>
 </div>
 </div>
 
