@@ -94,14 +94,39 @@ lambda_yj <- lambdas[which.max(pval)]
 
 Confianza = media esperada; predicción = una observación individual (más ancho).
 
+**Regla de `newdata`: una columna por predictor y una fila por observación. Los nombres deben coincidir con `formula(modelo)`.**
+
+## Caso 1: regresión simple
+
+Para **un valor nuevo** de un solo predictor:
+
 ``` r
-modelo <- lm(y ~ x, data=datos)
-nuevo <- data.frame(x=c(valor1,valor2))                # sustituir valores
-predict(modelo, newdata=nuevo, interval="confidence", level=0.95)
-predict(modelo, newdata=nuevo, interval="prediction", level=0.95)
+modelo <- lm(y ~ x,data=datos)
+nuevo <- data.frame(x=valor)               # sustituir x y valor
+predict(modelo,nuevo,interval="confidence",level=0.95)
+predict(modelo,nuevo,interval="prediction",level=0.95)
 ```
 
-Para bandas:
+Para **varios valores del mismo predictor**, `c()` crea varias observaciones:
+
+``` r
+nuevo <- data.frame(x=c(valor1,valor2))     # 2 filas, 1 predictor
+```
+
+## Caso 2: regresión múltiple
+
+Para una observación con varios predictores, cada predictor es una columna:
+
+``` r
+modelo <- lm(y ~ x1 + x2,data=datos)
+nuevo <- data.frame(x1=valor1,x2=valor2)   # 1 fila, 2 predictores
+predict(modelo,nuevo,interval="confidence",level=0.95)
+predict(modelo,nuevo,interval="prediction",level=0.95)
+```
+
+Ejemplo: si `formula(modelo)` es `mpg ~ wt + hp`, usar `data.frame(wt=3,hp=150)`. No usar `data.frame(x=c(wt=3,hp=150))` porque eso crea una sola columna llamada `x`.
+
+Bandas en regresión simple:
 
 ``` r
 nuevo_x <- data.frame(x=seq(min(datos$x),max(datos$x),length.out=200))
