@@ -353,7 +353,7 @@ Por eso:
 # 17. Diferencia entre jerárquico y K-means
 
 | Característica | Jerárquico | K-means |
-|------------------------|------------------------|------------------------|
+|----|----|----|
 | ¿Se indica $k$ desde el inicio? | No | Sí |
 | Resultado principal | Dendrograma | Asignación y centros |
 | Base del método | Distancias entre objetos/grupos | Distancia a centroides |
