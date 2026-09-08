@@ -52,6 +52,12 @@ Sigma <- t(Xc)%*%Xc/n; D_inv <- diag(1/sqrt(diag(Sigma))); R <- D_inv%*%Sigma%*%
 eig <- eigen(M); eig$values; eig$vectors                  # M=S o R
 ```
 
+**Visualización rápida de correlaciones.** Útil para detectar de inmediato relaciones positivas, negativas y fuertes.
+
+``` r
+corrplot::corrplot(R,method="color",type="lower",addCoef.col="black",diag=FALSE)
+```
+
 # 1. Normalidad univariada
 
 Objetivo: decidir si una variable puede considerarse aproximadamente normal y, si no, evaluar una transformación.
@@ -63,7 +69,7 @@ moments::skewness(x); moments::kurtosis(x); shapiro.test(x); moments::jarque.tes
 qqnorm(x); qqline(x); hist(x,probability=TRUE); lines(density(x))
 ```
 
-En Q-Q plot, puntos cercanos a la recta apoyan normalidad; desviaciones sistemáticas en colas indican posibles problemas.
+En Q-Q plot, puntos cercanos a la recta apoyan normalidad; desviaciones sistemáticas en colas indican posibles problemas. El histograma con densidad ayuda a revisar forma, simetría y colas.
 
 **Box-Cox:** respuesta positiva; elegir $\lambda$ que maximiza log-verosimilitud y volver a revisar normalidad.
 
@@ -109,6 +115,14 @@ nuevo_x <- data.frame(x=seq(min(datos$x),max(datos$x),length.out=200))
 IC <- predict(modelo,nuevo_x,interval="confidence"); IP <- predict(modelo,nuevo_x,interval="prediction")
 ```
 
+**Gráfico de bandas.** El intervalo de predicción debe verse más ancho que el de confianza.
+
+``` r
+plot(datos$x,datos$y,pch=19); lines(nuevo_x$x,IC[,"fit"],lwd=2)
+lines(nuevo_x$x,IC[,"lwr"],lty=2); lines(nuevo_x$x,IC[,"upr"],lty=2); lines(nuevo_x$x,IP[,"lwr"],lty=3); lines(nuevo_x$x,IP[,"upr"],lty=3)
+legend("topleft",legend=c("Regresión","IC 95%","IP 95%"),lty=c(1,2,3),bty="n")
+```
+
 # 3. Normal multivariada
 
 Extiende la normal univariada a varias variables analizadas conjuntamente. Aquí importan tanto las distribuciones individuales como la estructura de covarianzas.
@@ -119,6 +133,16 @@ Extiende la normal univariada a varias variables analizadas conjuntamente. Aquí
 mu <- c(mu1,mu2); Sigma <- matrix(c(var1,cov12,cov12,var2),2,byrow=TRUE)
 mnormt::pmnorm(c(x1,x2),mean=mu,varcov=Sigma)
 ```
+
+**Superficie y contornos de la normal bivariada.** La superficie muestra la densidad en 3D; los contornos muestran la misma distribución vista desde arriba.
+
+``` r
+x1<-seq(mu[1]-4*sqrt(Sigma[1,1]),mu[1]+4*sqrt(Sigma[1,1]),length.out=100); x2<-seq(mu[2]-4*sqrt(Sigma[2,2]),mu[2]+4*sqrt(Sigma[2,2]),length.out=100)
+z<-outer(x1,x2,Vectorize(function(a,b) mnormt::dmnorm(cbind(a,b),mean=mu,varcov=Sigma)))
+persp(x1,x2,z,theta=30,phi=25,expand=.6,xlab="X1",ylab="X2",zlab="Densidad"); contour(x1,x2,z)
+```
+
+Mayor varianza alarga la distribución en esa dirección; la covarianza determina la orientación de los contornos.
 
 **Transformaciones/combinaciones.** Si $Y=AX+d$: $\mu_Y=A\mu_X+d$, $\Sigma_Y=A\Sigma_XA^T$.
 
@@ -178,13 +202,12 @@ Xtrab<-scale(X); scores<-Xtrab%*%V; plot(scores[,1],scores[,2],pch=19)
 
 Mayor $|coeficiente|$ = mayor influencia; el signo completo de un eigenvector puede invertirse sin cambiar PCA.
 
-**PCA y gráficos.**
+**PCA y gráficos.** Scree ayuda a elegir componentes; individuos muestra observaciones; variables muestra cargas; biplot combina ambos.
 
 ``` r
 cp<-princomp(X,cor=TRUE,scores=TRUE); summary(cp); round(cp$loadings[,1:2],3); head(cp$scores[,1:2])
 pca<-FactoMineR::PCA(X,scale.unit=TRUE,ncp=ncol(X),graph=FALSE)
-factoextra::fviz_screeplot(pca,addlabels=TRUE); factoextra::fviz_pca_ind(pca,geom.ind="point")
-factoextra::fviz_pca_var(pca,repel=TRUE); factoextra::fviz_pca_biplot(pca,geom.ind="point",label="var",repel=TRUE)
+factoextra::fviz_screeplot(pca,addlabels=TRUE); factoextra::fviz_pca_ind(pca,geom.ind="point"); factoextra::fviz_pca_var(pca,repel=TRUE); factoextra::fviz_pca_biplot(pca,geom.ind="point",label="var",repel=TRUE)
 ```
 
 Biplot: flechas similares = correlación positiva; opuestas = negativa; puntos cercanos = observaciones similares.
