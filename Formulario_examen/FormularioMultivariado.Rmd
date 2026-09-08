@@ -248,47 +248,152 @@ Biplot: flechas similares = correlación positiva; opuestas = negativa; puntos c
 
 # 5. Análisis factorial (Módulo 1)
 
-Busca factores latentes que expliquen la **varianza común/correlaciones** entre variables.
+Busca **factores latentes** que expliquen la varianza común y las correlaciones entre variables observadas. El modelo para una variable estandarizada es:
 
-## Correlaciones, parciales, Bartlett y KMO
+$$Z_i=\lambda_{i1}F_1+\lambda_{i2}F_2+\cdots+\lambda_{ik}F_k+e_i$$
+
+Carga $\lambda_{ij}$ = relación de la variable $i$ con el factor $j$. Comunalidad $h_i^2$ = parte explicada por los factores; unicidad $u_i^2=1-h_i^2$ = parte no explicada.
+
+## 1. Correlaciones y correlaciones parciales
+
+Primero comprobar que las variables realmente tengan estructura de correlación.
 
 ``` r
-Corr <- psych::corr.test(M,adjust="none"); R <- Corr$r; Corr$p
-parciales <- psych::partial.r(R)             # correlaciones controlando las demás
-psych::cortest.bartlett(R,n=nrow(M))        # H0: R=I; p<0.05 favorece FA
-K <- psych::KMO(R); K$MSA; K$MSAi          # KMO global e individual
+Corr <- psych::corr.test(M,adjust="none")
+R <- Corr$r; P <- Corr$p
+round(R,3); round(P,4)
+
+corrplot::corrplot(R,method="color",type="lower",addCoef.col="black",diag=FALSE)
+
+parciales <- psych::partial.r(R)
+round(parciales,3)
+corrplot::corrplot(parciales,method="color",type="lower",addCoef.col="black",diag=FALSE)
 ```
 
-KMO: \<0.50 inaceptable; 0.50–0.59 miserable; 0.60–0.69 mediocre; 0.70–0.79 aceptable; 0.80–0.89 meritorio; \>=0.90 maravilloso.
+Correlaciones grandes en valor absoluto indican relaciones fuertes. Las parciales muestran qué relación permanece entre dos variables después de controlar las demás.
 
-Si usan ML, revisar también Mardia en la sección 3; si la normalidad es problemática, comparar con MINRES.
+## 2. Bartlett y KMO: ¿es adecuado hacer FA?
 
-## Número de factores
+Bartlett prueba:
+
+$$H_0:R=I \quad\text{(sin correlación conjunta)}$$
+$$H_1:R\neq I$$
+
+``` r
+bartlett <- psych::cortest.bartlett(R,n=nrow(M))
+bartlett$chisq; bartlett$df; bartlett$p.value
+```
+
+$p<0.05$ → rechazar $H_0$ → existe correlación conjunta y favorece continuar con FA.
+
+``` r
+K <- psych::KMO(R)
+K$MSA                                  # KMO global
+K$MSAi                                 # KMO por variable
+```
+
+KMO: <0.50 inaceptable; 0.50–0.59 miserable; 0.60–0.69 mediocre; 0.70–0.79 aceptable; 0.80–0.89 meritorio; >=0.90 maravilloso. Una variable con KMO individual muy bajo puede dificultar la estructura factorial.
+
+## 3. Normalidad y elección ML/MINRES
+
+Si se usa máxima verosimilitud (`fm="ml"`), revisar normalidad multivariada:
+
+``` r
+mardia <- MVN::mvn(data=M,mvn_test="mardia")
+mardia$multivariate_normality
+```
+
+$p<0.05$ → no normalidad multivariada. En las actividades se comparó ML con MINRES; MINRES es útil para contrastar la solución cuando la normalidad es problemática.
+
+## 4. Elegir número de factores
+
+Usar Cattell/Scree y análisis paralelo; buscar el número respaldado por ambos.
 
 ``` r
 psych::scree(M,factors=TRUE,pc=FALSE)
+
+set.seed(123)
 psych::fa.parallel(M,fa="fa",fm="ml",n.iter=100)
 psych::fa.parallel(M,fa="fa",fm="minres",n.iter=100)
 ```
 
-Conservar el número respaldado por scree/análisis paralelo según el ejercicio.
+En Scree, buscar dónde la caída fuerte empieza a estabilizarse. En análisis paralelo, conservar los factores sugeridos por la comparación con datos aleatorios.
 
-## Ajustar, rotar e interpretar
+## 5. Ajuste sin rotación y comparación ML/MINRES
 
 ``` r
-nf <- 2                                      # sustituir número de factores
-fa_ml <- psych::fa(M,nfactors=nf,rotate="varimax",fm="ml")
-fa_min <- psych::fa(M,nfactors=nf,rotate="varimax",fm="minres")
-print(fa_ml$loadings,cutoff=0.30,sort=TRUE)
-fa_ml$communality; fa_ml$uniquenesses; fa_ml$Vaccounted
-psych::fa.diagram(fa_ml)
+nf <- 2                                      # sustituir número elegido
+fa_ml0 <- psych::fa(M,nfactors=nf,rotate="none",fm="ml")
+fa_min0 <- psych::fa(M,nfactors=nf,rotate="none",fm="minres")
+
+print(fa_ml0,cut=0.30,sort=TRUE)
+print(fa_min0,cut=0.30,sort=TRUE)
 ```
 
-Para Quartimax: `rotate="quartimax"`. Carga alta = variable asociada al factor; comunalidad alta = bien explicada; unicidad $=1-h^2$.
+Comparar cargas, porcentaje explicado y comunalidades. Carga alta en valor absoluto = variable fuertemente asociada con ese factor.
 
-Modelo: $Z_i=\lambda_{i1}F_1+\cdots+\lambda_{ik}F_k+e_i$. Los factores pueden intercambiar orden o invertir todos sus signos sin cambiar la solución.
+``` r
+fa_ml0$communality; fa_ml0$uniquenesses; fa_ml0$Vaccounted
+fa_min0$communality; fa_min0$uniquenesses; fa_min0$Vaccounted
+```
 
-PCA usa varianza total para reducir dimensión; FA explica varianza común mediante factores latentes y separa la unicidad.
+Regla útil:
+
+$$h_i^2=\lambda_{i1}^2+\cdots+\lambda_{ik}^2,\qquad u_i^2=1-h_i^2$$
+
+Comunalidad alta = variable bien representada por los factores; unicidad alta = gran parte queda sin explicar.
+
+## 6. Rotaciones Varimax y Quartimax
+
+La rotación no cambia la idea general del modelo; busca una estructura de cargas más fácil de interpretar.
+
+``` r
+fa_ml_var <- psych::fa(M,nfactors=nf,rotate="varimax",fm="ml")
+fa_min_var <- psych::fa(M,nfactors=nf,rotate="varimax",fm="minres")
+fa_ml_qua <- psych::fa(M,nfactors=nf,rotate="quartimax",fm="ml")
+fa_min_qua <- psych::fa(M,nfactors=nf,rotate="quartimax",fm="minres")
+
+print(fa_ml_var$loadings,cutoff=0.30,sort=TRUE)
+print(fa_min_var$loadings,cutoff=0.30,sort=TRUE)
+print(fa_ml_qua$loadings,cutoff=0.30,sort=TRUE)
+print(fa_min_qua$loadings,cutoff=0.30,sort=TRUE)
+```
+
+- **Varimax:** busca que cada factor tenga algunas cargas altas y otras bajas, facilitando distinguir grupos de variables.
+- **Quartimax:** busca simplificar la representación de cada variable en pocos factores.
+
+## 7. Gráficas e interpretación de factores
+
+``` r
+psych::fa.diagram(fa_ml_var)
+psych::fa.diagram(fa_min_var)
+```
+
+En el diagrama: observar qué variables tienen las cargas más grandes hacia cada factor y usar esas variables para **dar significado/nombre al factor**.
+
+Para extraer las cargas y escribir las composiciones:
+
+``` r
+L <- unclass(fa_ml_var$loadings)
+round(L,3)
+```
+
+Por ejemplo, para dos factores:
+
+$$Z_{x_1}\approx \lambda_{11}F_1+\lambda_{12}F_2+e_1$$
+
+Repetir con cada fila de la matriz de cargas. Los factores pueden intercambiar orden o invertir todos sus signos sin cambiar sustancialmente la solución.
+
+## 8. Si se parte directamente de la matriz R
+
+Cuando `fa()` recibe la matriz de correlaciones y no los datos originales, indicar el número de observaciones:
+
+``` r
+fa_var <- psych::fa(R,nfactors=nf,n.obs=nrow(M),rotate="varimax",fm="ml")
+fa_qua <- psych::fa(R,nfactors=nf,n.obs=nrow(M),rotate="quartimax",fm="ml")
+```
+
+PCA usa **varianza total** para reducir dimensión. FA explica **varianza común** mediante factores latentes y separa la unicidad.
 
 # 6. Clustering jerárquico (Módulo 1)
 
@@ -426,7 +531,7 @@ aux <- lm(x1 ~ x2 + x3,data=datos)          # repetir cambiando predictor respue
 VIF_x1 <- 1/(1-summary(aux)$r.squared)
 ```
 
-VIF \< 5: sin problema importante según el criterio usado en las actividades.
+VIF < 5: sin problema importante según el criterio usado en las actividades.
 
 ## Validación de residuos
 
@@ -582,84 +687,187 @@ En Mardia y Box M, $p<0.05$ rechaza el supuesto correspondiente. Un buen porcent
 
 # 10. Regresión logística (Módulo 2)
 
-Respuesta binaria. Primero estima $p=P(Y=1)$ y después puede convertir esa probabilidad en clase mediante un umbral.
+Se usa cuando la respuesta es **binaria**. El modelo estima primero una probabilidad $p=P(Y=1)$ y después puede convertirla en clase usando un umbral.
 
-$$\log\left(\frac{p}{1-p}\right)=\beta_0+\beta_1X_1+\cdots+\beta_pX_p,\qquad
-p=\frac{e^\eta}{1+e^\eta}$$
+$$\text{odds}=\frac{p}{1-p},\qquad
+\log\left(\frac{p}{1-p}\right)=\beta_0+\beta_1X_1+\cdots+\beta_pX_p$$
 
-## Ajustar e interpretar
+Si $\eta=\beta_0+\beta_1X_1+\cdots+\beta_pX_p$:
+
+$$p=\frac{e^\eta}{1+e^\eta}$$
+
+## 1. Separar entrenamiento y prueba
+
+En la actividad se respetó el orden temporal: años anteriores para entrenar y años posteriores para probar.
+
+``` r
+entrenamiento <- subset(datos,Year <= corte)
+prueba <- subset(datos,Year > corte)
+dim(entrenamiento); dim(prueba)
+```
+
+## 2. Ajustar el modelo
 
 ``` r
 modelo_log <- glm(y ~ x1,data=entrenamiento,family=binomial)
-summary(modelo_log)                         # p<0.05: beta_j significativo
-beta <- coef(modelo_log)
-OR <- exp(beta)                             # odds ratios
-100*(OR-1)                                 # cambio % de odds
+summary(modelo_log)
+coef(modelo_log)
 ```
 
-$\beta_j>0$ aumenta el log-odds de $Y=1$; $e^{\beta_j}$ multiplica los odds por cada unidad adicional de $X_j$.
+En `summary`, para cada predictor:
 
-## Probabilidad para nuevos valores
+$$H_0:\beta_j=0,\qquad H_1:\beta_j\neq0$$
+
+$p<0.05$ → el predictor tiene evidencia de asociación con la respuesta. $\beta_j>0$ aumenta el log-odds de la clase positiva; $\beta_j<0$ lo disminuye.
+
+## 3. Odds ratio e interpretación
+
+``` r
+beta <- coef(modelo_log)
+OR <- exp(beta)
+OR
+100*(OR-1)
+```
+
+Para un predictor $x_j$:
+
+$$OR=e^{\beta_j}$$
+
+- $OR>1$: los odds de la clase positiva aumentan.
+- $OR<1$: los odds disminuyen.
+- `100*(OR-1)` da el cambio porcentual de los odds por una unidad adicional del predictor.
+
+## 4. Probabilidad para un nuevo valor
 
 ``` r
 predict(modelo_log,newdata=data.frame(x1=valor),type="response")
 ```
 
-Curva logística para un predictor:
+`type="response"` devuelve directamente la probabilidad estimada, no el logit.
+
+## 5. Gráfica de la curva logística
+
+Para un solo predictor continuo:
 
 ``` r
-plot(entrenamiento$x1,as.numeric(entrenamiento$y=="1"))
-curve(predict(modelo_log,data.frame(x1=x),type="response"),add=TRUE,lwd=2)
+plot(entrenamiento$x1,
+     as.numeric(entrenamiento$y=="1"),
+     xlab="x1",ylab="Probabilidad de Y=1")
+
+curve(predict(modelo_log,
+              newdata=data.frame(x1=x),
+              type="response"),
+      add=TRUE,lwd=2)
 ```
 
-## Deviance: modelo nulo vs modelo
+Pendiente ascendente → la probabilidad de la clase positiva aumenta con $x_1$; descendente → disminuye.
+
+## 6. Deviance: modelo nulo vs modelo con predictor
 
 ``` r
 nulo <- glm(y ~ 1,data=entrenamiento,family=binomial)
-anova(nulo,modelo_log,test="Chisq")         # p<0.05: predictor(es) mejoran al nulo
+anova(nulo,modelo_log,test="Chisq")
 ```
 
-## Clasificación y matriz de confusión
+$$H_0:\text{el modelo con predictor no mejora al nulo}$$
+
+$p<0.05$ → incluir el/los predictor(es) mejora significativamente al modelo sin predictores.
+
+## 7. Predicción de clases y matriz de confusión
 
 ``` r
 prob <- predict(modelo_log,newdata=prueba,type="response")
-pred <- ifelse(prob>0.5,"1","0")          # adaptar clase positiva y umbral
+pred <- ifelse(prob>0.5,"1","0")          # adaptar nombres de clases
 pred <- factor(pred,levels=levels(prueba$y))
+
 tabla <- table(Real=prueba$y,Predicho=pred)
 tabla
 ```
 
-Umbral 0.5: `prob > 0.5` → clase positiva. La diagonal son aciertos.
+Umbral 0.5: probabilidad > 0.5 → clase positiva. La **diagonal** son aciertos y las celdas fuera de la diagonal son errores.
 
-## Métricas binarias
-
-Definir primero cuál es la clase positiva.
+Visualización usada en la actividad:
 
 ``` r
-exactitud <- sum(diag(tabla))/sum(tabla); error <- 1-exactitud
-sensibilidad <- tabla["1","1"]/sum(tabla["1",])   # verdaderos positivos / positivos reales
-especificidad <- tabla["0","0"]/sum(tabla["0",]) # verdaderos negativos / negativos reales
-c(Exactitud=exactitud,Error=error,Sensibilidad=sensibilidad,Especificidad=especificidad)
+mosaicplot(tabla,
+           main="Valores reales vs predicciones",
+           xlab="Clase real",ylab="Clase predicha")
 ```
 
-Exactitud sola puede ocultar mal desempeño en una clase; revisar sensibilidad y especificidad.
+## 8. Exactitud, error, sensibilidad y especificidad
 
-## Supuestos/revisión
+Definir claramente cuál es la clase positiva.
 
-Independencia: revisar diseño y residuos; si hay orden temporal, usar el procedimiento trabajado en clase.
+``` r
+exactitud <- sum(diag(tabla))/sum(tabla)
+error <- 1-exactitud
+
+sensibilidad <- tabla["1","1"]/sum(tabla["1",])
+especificidad <- tabla["0","0"]/sum(tabla["0",])
+
+c(Exactitud=exactitud,
+  Error=error,
+  Sensibilidad=sensibilidad,
+  Especificidad=especificidad)
+```
+
+$$Sensibilidad=\frac{VP}{VP+FN},\qquad
+Especificidad=\frac{VN}{VN+FP}$$
+
+Sensibilidad alta = detecta bien la clase positiva. Especificidad alta = detecta bien la clase negativa. Una buena exactitud global puede esconder mal desempeño en una de las clases.
+
+## 9. Supuesto de independencia
+
+Usar residuos de deviance y, si existe orden temporal, revisar su comportamiento respecto al tiempo.
 
 ``` r
 res <- residuals(modelo_log,type="deviance")
-plot(seq_along(res),res); abline(h=0,lty=2)
-# lmtest::dwtest(res ~ tiempo)              # si existe orden temporal
+tiempo <- seq_along(res)
+plot(tiempo,res,xlab="Orden",ylab="Residuos de deviance")
+abline(h=0,lty=2)
+
+lmtest::dwtest(res ~ tiempo)
 ```
 
-Linealidad del predictor continuo con el **logit**:
+Visualmente buscamos ausencia de patrones claros. En Durbin-Watson, un valor cercano a 2 y una prueba no significativa favorecen ausencia de autocorrelación.
+
+## 10. Linealidad del predictor continuo con el logit
+
+La regresión logística **no exige relación lineal entre $X$ y $p$**; en la actividad se revisó la relación aproximadamente lineal entre el predictor continuo y el **logit**.
+
+Gráficamente, agrupar el predictor y calcular el logit promedio:
 
 ``` r
-y_num <- ifelse(datos$y=="1",1,0)
-datos$x1_pos <- datos$x1-min(datos$x1)+0.001
-car::boxTidwell(y_num ~ x1_pos,data=datos)  # p>0.05 favorece linealidad usada en la actividad
+entrenamiento$y_num <- ifelse(entrenamiento$y=="1",1,0)
+
+grupos <- cut(entrenamiento$x1,
+              breaks=unique(quantile(entrenamiento$x1,probs=seq(0,1,0.1))),
+              include.lowest=TRUE)
+
+lin <- aggregate(cbind(x1,y_num) ~ grupos,
+                 data=entrenamiento,FUN=mean)
+lin$logit <- qlogis(lin$y_num)
+
+plot(lin$x1,lin$logit,xlab="x1",ylab="Logit")
+abline(lm(logit ~ x1,data=lin))
 ```
 
-Con un solo predictor no hay multicolinealidad entre predictores; con varios revisar VIF. Revisar también `table(y)` para comprobar tamaño suficiente de ambas clases.
+Complementar con Box-Tidwell, haciendo positivo el predictor si es necesario:
+
+``` r
+entrenamiento$x1_pos <- entrenamiento$x1-min(entrenamiento$x1)+0.001
+car::boxTidwell(y_num ~ x1_pos,data=entrenamiento)
+```
+
+En el procedimiento usado en la actividad, $p>0.05$ favorece la linealidad con el logit.
+
+## 11. Multicolinealidad y tamaño de muestra
+
+Con un solo predictor no existe multicolinealidad **entre predictores**. Con varios, revisar VIF como en regresión lineal.
+
+``` r
+table(entrenamiento$y)                    # revisar cantidad de observaciones por clase
+# car::vif(modelo_log)                    # si hay varios predictores
+```
+
+Revisar que ambas clases tengan suficientes observaciones; no basta con una exactitud alta si una clase está muy poco representada.
