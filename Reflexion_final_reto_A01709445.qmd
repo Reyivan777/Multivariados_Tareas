@@ -5,7 +5,7 @@ title-block: false
 format:
   pdf:
     toc: false
-    number-sections: true
+    number-sections: false
     geometry:
       - margin=1in
     fontsize: 11pt
@@ -109,9 +109,9 @@ Creo que el reto buscaba que aprendiéramos a trabajar un problema real desde un
 
 ## 2. Estrategia
 
-Nuestra estrategia cambió bastante durante el reto. Al principio queríamos estudiar varios contaminantes, pero conforme entendimos mejor la base vimos que el objetivo era demasiado amplio. Terminamos enfocándonos en predecir O3 con 24 horas de anticipación. También tuvimos que cambiar algunas decisiones cuando encontramos problemas como la falta de datos en 2020.
+Nuestra estrategia fue cambiando durante el reto. Al principio queríamos estudiar varios contaminantes, pero vimos que el objetivo era demasiado amplio y terminamos enfocándonos en predecir O3 con 24 horas de anticipación. También cambiamos algunas decisiones cuando encontramos problemas como la falta de datos en 2020.
 
-En lo personal, traté de no quedarme solo con correr código. Me ayudó mucho detenerme a entender qué representaban las bases, tablas y resultados antes de seguir. R y Quarto ayudaron a mantener el análisis ordenado y GitHub sirvió para integrar el trabajo del equipo y guardar los cambios. También me di cuenta de que en un proyecto largo es muy fácil perderse si el código y las decisiones no están bien organizados.
+En lo personal, traté de no quedarme solo con correr código. Me ayudó detenerme a entender qué representaban las bases y los resultados antes de seguir. R y Quarto ayudaron a mantener el análisis ordenado y GitHub a integrar el trabajo del equipo. También aprendí que en un proyecto largo es fácil perderse si el código y las decisiones no están bien organizados.
 
 ## 3. Resultado
 
