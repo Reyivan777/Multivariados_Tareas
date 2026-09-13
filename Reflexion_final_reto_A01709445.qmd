@@ -14,12 +14,14 @@ execute:
   echo: false
 ---
 
+```{=latex}
 \begin{titlepage}
-
 \begin{center}
+```
 
 ![](https://raw.githubusercontent.com/Reyivan777/Reto-Multivariados/trunk/quarto/logotec.png){width=65%}
 
+```{=latex}
 \vspace{1.5cm}
 
 {\large \textbf{Aplicación de métodos multivariados en ciencia de datos (Gpo 101)}}
@@ -63,11 +65,8 @@ Predicción de ozono a 24 horas\\[0.3cm] en la Zona Metropolitana de Monterrey
 {\large 12 de septiembre de 2026}
 
 \end{center}
-
 \end{titlepage}
-
-```{=latex}
-\newpage
+\clearpage
 ```
 
 # Parte A. Reflexión argumentada
