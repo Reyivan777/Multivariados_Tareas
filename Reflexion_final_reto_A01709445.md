@@ -1,195 +1,71 @@
-# Reflexión final del reto — guía para redactar mi versión personal
+# Reflexión final del reto
 
-> **Importante:** este archivo es una guía de trabajo. La evidencia pide que la reflexión sea personal y señala que se revisará su autenticidad. Por eso, antes de entregar, debo convertir estas ideas en mis propias palabras, agregar lo que realmente pensé o aprendí y eliminar todo lo que no represente mi experiencia.
+**Rey Iván de la Fuente Chávez — A01709445**
 
-## Datos concretos de mi proyecto que puedo usar como evidencia
+## Parte A. Reflexión argumentada
 
-- El proyecto terminó enfocado en **predecir la concentración horaria de O3 con hasta 24 horas de anticipación**, para horas objetivo entre **10:00 y 20:00**, usando las estaciones **NTE, NTE2, NO y NE**.
-- La base integrada tuvo **192,723 registros**. En O3 se identificaron **46,839 valores faltantes (24.30 %)**, por lo que la calidad y disponibilidad de los datos influyeron directamente en las decisiones de modelado.
-- No se encontraron registros duplicados para una misma combinación de estación y fecha-hora.
-- La dirección del viento no se trató como una variable lineal común; se representó mediante componentes seno y coseno para respetar su naturaleza circular.
-- La evaluación final respetó el orden temporal: se utilizaron periodos anteriores para entrenamiento/validación y **2025 como prueba final**, evitando mezclar aleatoriamente pasado y futuro.
-- La comparación final consideró un **GAM Gamma** y **XGBoost**, además de una referencia de **persistencia diaria**. Para comparar GAM y XGBoost de forma justa se planteó una muestra común de evaluación.
-- El proyecto cambió bastante desde la idea inicial de estudiar muchos contaminantes al mismo tiempo hasta una pregunta más concreta y medible centrada en O3.
+### 1. Afirmación
 
----
+Después de realizar el reto, considero que la principal utilidad del modelado multivariado es que permite estudiar un fenómeno real tomando en cuenta que sus variables no actúan de manera aislada. En el caso de la calidad del aire, tratar de explicar el comportamiento del ozono únicamente con una variable hubiera dejado fuera gran parte del problema, porque su concentración cambia junto con la temperatura, la radiación solar, la humedad, el viento, la estación de monitoreo y su propio comportamiento en horas o días anteriores. Para mí, el valor del modelo estuvo en poder organizar toda esa información y encontrar qué relaciones realmente aportaban algo para comprender y anticipar el comportamiento del O3.
 
-# Parte A. Reflexión argumentada
+### 2. Evidencia
 
-## 1. Afirmación
+Un resultado que me ayudó a entender esto fue el análisis de componentes principales. Al trabajar con O3, su valor rezagado 24 horas y variables meteorológicas, se necesitaron cinco componentes para superar el 80 % de la varianza acumulada. El primer componente estuvo relacionado principalmente con el O3 actual, el O3 de 24 horas antes, la temperatura y la radiación solar, mientras que la humedad tuvo un comportamiento contrario. El segundo componente estuvo dominado por las componentes del viento. Esto mostró que había grupos de variables que compartían información y que el comportamiento del ozono estaba relacionado con más de un tipo de condición ambiental.
 
-### Idea que quiero defender
+La parte predictiva también fue una evidencia importante. En la muestra común de 2025, la persistencia diaria tuvo un MAE de 14.144 y un RMSE de 19.561. El modelo GAM redujo estos errores a 12.270 y 16.620, mientras que XGBoost obtuvo 12.110 y 16.579. La diferencia entre GAM y XGBoost fue pequeña, pero ambos mejoraron claramente la referencia de persistencia. Además, XGBoost pudo trabajar con una mayor cantidad de observaciones debido a que tolera valores faltantes en los predictores, mientras que el GAM necesitó casos completos.
 
-La utilidad principal del modelado multivariado no fue solamente obtener una predicción, sino **entender un fenómeno en el que varias variables cambian al mismo tiempo y determinar cuáles aportan información útil para anticipar el comportamiento del O3**.
+### 3. Justificación
 
-### Escribir con mis palabras
+Estos resultados respaldan mi idea porque muestran que combinar distintas variables sí agregó información que no estaba presente al observar solamente el valor anterior de O3. La persistencia era una referencia bastante razonable, ya que el análisis temporal mostró una relación fuerte con el valor de la misma hora del día anterior. Aun así, los modelos lograron reducir el error cuando agregaron información meteorológica, temporal y espacial. Esto me hizo ver que un modelo multivariado no sirve solamente para producir una predicción final, sino también para entender qué partes del fenómeno contienen información útil y cómo se relacionan entre ellas.
 
-Completar en 3–4 oraciones:
+También entendí que el proceso previo al modelo puede cambiar completamente las conclusiones. Por ejemplo, al inicio teníamos datos desde 2020, pero después descubrimos que en ese año faltaba más del 93 % de las mediciones de O3 en todas las estaciones analizadas, llegando prácticamente al 100 % en algunas. Incluir ese año solamente porque estaba disponible hubiera dado una falsa sensación de tener más información. Finalmente se decidió trabajar con 2021-2025. Para mí, esta fue una de las partes más importantes del reto porque dejó claro que un modelo no puede compensar una base de datos mal entendida o de mala calidad.
 
-- Antes del reto yo veía un modelo principalmente como: ________.
-- Después de trabajar con datos reales de calidad del aire entendí que: ________.
-- Para mí, la mayor utilidad de un modelo multivariado en este problema fue: ________.
+### 4. Respaldo
 
-## 2. Evidencia
+Lo que observamos también tiene sentido desde los conceptos vistos en el curso. El PCA permitió reducir y resumir la información de varias variables correlacionadas sin analizar cada una de forma completamente separada. Por otro lado, el GAM permitió representar relaciones no lineales entre O3 y sus predictores, lo cual era más razonable que asumir que todos los efectos eran lineales. La validación temporal también fue fundamental. En lugar de dividir los datos aleatoriamente, se utilizó información de años anteriores para construir los modelos y se dejó 2025 como prueba final. Esto evitó que información del futuro se utilizara para predecir el pasado y permitió evaluar los modelos en una situación más parecida a su uso real.
 
-Puedo usar uno o dos ejemplos concretos, no necesito contar todo el proyecto.
+### 5. Contraargumento o limitaciones
 
-### Evidencia posible A: los datos faltantes cambiaron el análisis
+A pesar de los resultados, no considero que el modelo deba interpretarse como una explicación completa de la contaminación por ozono. Una relación estadística no demuestra causalidad y existen factores que no están representados completamente en la base. También hubo diferencias importantes en disponibilidad de datos entre estaciones y periodos. Otra limitación es que 2025 solamente contiene información hasta junio, por lo que la prueba final no representa un año completo. Además, un error promedio aceptable no garantiza que el modelo funcione igual de bien durante episodios extremos de O3, que probablemente son los momentos más importantes desde el punto de vista ambiental. Por estas razones, utilizar un modelo sin revisar su contexto, sus errores y la calidad de los datos puede llevar a conclusiones equivocadas.
 
-El O3 tenía 24.30 % de valores faltantes en la base integrada. Esto obligó a revisar **dónde** faltaban las mediciones y no solamente a observar un porcentaje global. La disponibilidad de los datos terminó afectando los periodos que podían utilizarse para entrenar y evaluar.
+### 6. Conclusión
 
-**Mi interpretación personal:** ¿qué me sorprendió de esto?, ¿yo esperaba que limpiar la base fuera tan importante?, ¿qué decisión tuvimos que cambiar por este problema?
-
-Escribir 3–5 oraciones: ________
-
-### Evidencia posible B: comparar modelos y no quedarse con uno
-
-En la etapa final se compararon GAM Gamma y XGBoost, además de una referencia de persistencia. La comparación se hizo sobre 2025 y también sobre una muestra común para que las diferencias no fueran consecuencia de evaluar cada modelo con observaciones distintas.
-
-**Mi interpretación personal:** ¿qué aprendí al comparar un modelo más interpretable con uno más flexible?, ¿qué significa para mí que un modelo deba superar una referencia sencilla antes de considerarlo útil?
-
-Escribir 3–5 oraciones: ________
-
-### Evidencia posible C: la estructura temporal sí importa
-
-El proyecto no podía dividirse como una base cualquiera de forma aleatoria, porque utilizar información futura para predecir el pasado produciría fuga de información. Por eso se respetó el orden cronológico y 2025 quedó como prueba final.
-
-**Mi interpretación personal:** explicar por qué esto cambió mi forma de pensar sobre la validación de modelos: ________
-
-## 3. Justificación
-
-Aquí debo explicar **por qué la evidencia anterior apoya mi afirmación**, no repetir los resultados.
-
-Ideas que puedo desarrollar:
-
-- Una relación entre O3 y una sola variable puede ser engañosa si se ignoran temperatura, radiación, humedad, viento, estación y comportamiento temporal.
-- Trabajar varias variables conjuntamente permite encontrar patrones que no se observan al revisar columnas por separado.
-- En datos reales, el proceso de seleccionar variables, preparar rezagos y validar cronológicamente forma parte del modelo; no es solamente una etapa previa sin importancia.
-
-Completar con mi razonamiento:
-
-> Lo que esta evidencia me permitió entender y que no era tan evidente antes de modelar fue que ________. Al considerar las variables de manera conjunta, pude ver que ________. Esto es importante porque ________.
-
-## 4. Respaldo conceptual o metodológico
-
-No necesito llenar esta parte de teoría. Puedo relacionar lo que pasó con algunos conceptos vistos en el curso:
-
-- **Relaciones entre variables:** el O3 no depende de una única medición aislada; su comportamiento se estudia junto con variables meteorológicas, contaminantes y temporales.
-- **No linealidad:** un GAM permite modelar relaciones que no tienen que seguir una línea recta.
-- **Validación:** separar entrenamiento, validación y prueba permite evaluar el comportamiento del modelo con datos que no utilizó para ajustarse.
-- **Comparación contra una referencia:** la persistencia diaria sirve para comprobar si un modelo más elaborado realmente aporta algo.
-- **Reducción o síntesis de información:** si en el reporte final se conserva PCA, puedo explicar cómo ayuda a resumir variables correlacionadas sin analizar cada una de manera aislada.
-
-Escribir un párrafo corto conectando **solo dos o tres** de estos conceptos con mi experiencia: ________
-
-## 5. Contraargumento o limitaciones
-
-Esta parte no debe sonar como si el modelo resolviera todo. Algunas limitaciones reales del reto fueron:
-
-- hubo faltantes importantes en varias variables;
-- las estaciones tienen comportamientos y disponibilidades distintas;
-- un buen error promedio no significa que el modelo prediga correctamente todos los episodios altos de O3;
-- encontrar asociación entre variables no demuestra causalidad;
-- el modelo depende del periodo, estaciones y variables con los que fue construido;
-- un modelo más complejo puede mejorar predicción, pero ser más difícil de interpretar.
-
-### Preguntas para escribir mi párrafo
-
-¿Qué podría pasar si alguien usara el modelo sin revisar sus errores? ¿En qué situaciones no confiaría completamente en la predicción? ¿Qué información externa no estaba incluida en nuestra base y podría influir en el O3?
-
-Mi párrafo: ________
-
-## 6. Conclusión
-
-Evitar repetir todo. Cerrar con lo que realmente cambió en mi forma de entender el análisis de datos.
-
-Posible estructura:
-
-> Al terminar el reto, mi idea sobre el modelado multivariado cambió porque ________. Más que obtener una ecuación o una métrica, aprendí que ________. En un problema ambiental como este, considero que el verdadero valor del modelo está en ________, siempre que ________.
+Al terminar el reto, mi forma de ver el modelado multivariado cambió. Antes era fácil pensar que el objetivo principal era encontrar el modelo con el menor error, pero ahora considero que el proceso completo es igual de importante: entender los datos, justificar qué información se utiliza, comparar métodos y reconocer cuándo un resultado tiene limitaciones. En este proyecto, el modelado permitió identificar patrones entre O3, meteorología y temporalidad, además de construir predicciones mejores que una referencia sencilla. Para mí, el verdadero valor del análisis multivariado está en convertir muchas mediciones relacionadas en información que pueda interpretarse y utilizarse para tomar decisiones, sin perder de vista que el modelo es una aproximación del fenómeno y no el fenómeno mismo.
 
 ---
 
-# Parte B. Autoevaluación personal — Modelo PER
+## Parte B. Autoevaluación personal — Modelo PER
 
-## 1. Propósito
+### 1. Propósito
 
-### Lo que probablemente buscaba desarrollar el reto
+Considero que el propósito del reto era aprender a llevar un problema real desde una pregunta bastante abierta hasta un análisis que pudiera justificarse y evaluarse con datos. No se trataba únicamente de aplicar PCA, GAM u otra técnica porque apareciera en el curso, sino de decidir cuándo tenía sentido utilizarla. También estaban en juego habilidades de programación, interpretación, comunicación de resultados y trabajo en equipo. Una parte que considero especialmente importante fue aprender a diferenciar entre obtener un resultado y realmente entender qué significa dentro del problema de calidad del aire.
 
-No solamente aplicar fórmulas, sino aprender a convertir un problema real en una pregunta que pudiera analizarse con datos, preparar una base imperfecta, escoger técnicas adecuadas, validar resultados y explicar qué significan dentro del contexto de calidad del aire.
+### 2. Estrategia
 
-### Lo que debo agregar de manera personal
+Nuestra estrategia cambió bastante conforme avanzó el reto. Al principio el objetivo era muy amplio y se consideraban distintos contaminantes y relaciones. Conforme exploramos los datos nos dimos cuenta de que era mejor plantear una pregunta más concreta, por lo que terminamos enfocándonos en predecir O3 con 24 horas de anticipación. También tuvimos que modificar decisiones después de encontrar problemas como la falta de datos de O3 en 2020 y las diferencias de disponibilidad entre variables.
 
-- ¿Qué habilidad siento que más se me exigió: programar, interpretar, investigar, trabajar con el equipo, tomar decisiones?
-- ¿Qué parte del reto me costó más al principio?
-- ¿Qué concepto del curso ahora entiendo mejor porque lo tuve que aplicar?
+En lo personal, algo que me funcionó fue no limitarme a ejecutar el código. Traté de entender qué representaba cada base intermedia, por qué se eliminaba o conservaba determinada información y qué significaban las tablas y gráficas antes de continuar. El uso de R y Quarto ayudó a mantener juntos el análisis y su explicación, mientras que GitHub fue importante para integrar el trabajo del equipo y conservar los cambios. Trabajar de esta manera también me mostró que en un proyecto largo es muy fácil perder claridad si el código y las decisiones no se documentan conforme se avanza.
 
-Mi párrafo: ________
+### 3. Resultado
 
-## 2. Estrategia
+El primer aprendizaje importante que me llevo es que **los datos reales casi nunca están listos para modelarse**. En este reto hubo que homologar nombres, convertir tipos, revisar valores faltantes, detectar mediciones fuera de rango y analizar la disponibilidad por año y estación. Antes podía ver la limpieza como una etapa previa al análisis; ahora la considero parte del análisis, porque las decisiones tomadas ahí cambian directamente qué puede aprender el modelo.
 
-### Cambios reales que puedo mencionar
+El segundo aprendizaje es que **la validación importa tanto como el modelo**. Aprendí que en un problema temporal no sería correcto mezclar aleatoriamente observaciones del pasado y del futuro. Separar los años cronológicamente y dejar 2025 para la prueba final hizo que la evaluación fuera más exigente, pero también mucho más creíble.
 
-El proyecto comenzó con un objetivo demasiado amplio. Conforme se exploraron los datos, el equipo fue delimitando la pregunta hasta centrarse en la predicción de O3. También fue necesario cambiar decisiones después de revisar faltantes, estructura temporal y disponibilidad por año y estación. El trabajo se apoyó en R, Quarto y GitHub para mantener el análisis reproducible y poder integrar las aportaciones del equipo.
+El tercer aprendizaje es que **un modelo más complejo no necesariamente vuelve inútiles a los modelos más interpretables**. XGBoost obtuvo el menor error y una mejor cobertura, pero su ventaja frente al GAM fue pequeña. El GAM permitió entender mejor la forma de algunas relaciones y tuvo un desempeño muy parecido. Esto me ayudó a dejar de pensar en la selección de modelos como una competencia en la que solamente gana el menor número y a considerar también interpretabilidad, cobertura y utilidad práctica.
 
-### Para volverlo realmente mío
-
-Responder antes de redactar:
-
-- ¿Qué parte hice yo directamente?
-- ¿En qué momento tuve que rehacer algo porque el primer enfoque no funcionó?
-- ¿Cómo nos repartimos el trabajo?
-- ¿Qué aprendí usando GitHub que antes no sabía hacer bien?
-- ¿Hubo alguna decisión del equipo con la que inicialmente no estaba de acuerdo o que después entendí mejor?
-
-Mi párrafo: ________
-
-## 3. Resultado
-
-Debo mencionar al menos tres aprendizajes significativos. Puedo usar estos como punto de partida, pero necesito describirlos desde mi experiencia.
-
-### Aprendizaje 1 — Los datos reales no llegan listos
-
-Idea: una parte grande del trabajo fue homologar nombres, convertir tipos, revisar valores inválidos y faltantes antes de poder modelar.
-
-Lo que yo aprendí de esto: ________
-
-### Aprendizaje 2 — Validar bien importa tanto como ajustar el modelo
-
-Idea: en una serie temporal no es correcto mezclar aleatoriamente pasado y futuro. La forma de separar los datos puede hacer que una evaluación parezca mejor de lo que realmente es.
-
-Lo que yo aprendí de esto: ________
-
-### Aprendizaje 3 — El modelo más complejo no necesariamente es el más útil
-
-Idea: comparar GAM, XGBoost y persistencia obliga a pensar no solo en el error, sino también en interpretabilidad, cobertura, facilidad de uso y comportamiento por estación.
-
-Lo que yo aprendí de esto: ________
-
-### Algo que todavía necesito fortalecer
-
-Elegir algo específico y creíble, por ejemplo:
-
-- interpretar con mayor profundidad modelos no lineales;
-- justificar mejor la selección de variables;
-- trabajar con series de tiempo y validación temporal;
-- entender mejor los supuestos estadísticos;
-- organizar mejor el código desde el inicio para evitar rehacer partes después.
-
-Lo que quiero seguir fortaleciendo y por qué: ________
+Todavía quiero fortalecer mi capacidad para interpretar modelos no lineales y series de tiempo con mayor profundidad. Puedo construir y evaluar este tipo de modelos, pero me interesa entender mejor sus supuestos, diagnosticar sus errores y justificar de manera más sólida por qué una especificación es preferible a otra. También considero que puedo mejorar la organización del código desde el inicio de un proyecto para reducir la necesidad de rehacer partes cuando el objetivo cambia. En general, el reto me ayudó a conectar mejor la teoría de análisis multivariado con un problema real y, sobre todo, a entender que llegar a una conclusión confiable requiere mucho más que simplemente ejecutar un método estadístico.
 
 ---
 
-# Revisión final antes de entregar
+## Declaratoria de uso de IA durante el desarrollo del trabajo
 
-Antes de convertir esto en mi reflexión final debo asegurarme de que:
+**Opción B. Se utilizó IA.**
 
-- [ ] La Parte A tenga aproximadamente una página.
-- [ ] La Parte B tenga entre media página y una página.
-- [ ] No describa el código paso por paso.
-- [ ] Incluya al menos un resultado o decisión concreta del reto.
-- [ ] Explique qué entendí gracias a ese resultado.
-- [ ] Incluya limitaciones y no presente el modelo como una verdad absoluta.
-- [ ] En la Parte B aparezcan al menos tres aprendizajes reales.
-- [ ] Mencione mi participación personal y no solamente lo que hizo “el equipo”.
-- [ ] Reescriba todo con expresiones que yo usaría normalmente.
-- [ ] Elimine cualquier idea que no represente lo que realmente hice o aprendí.
+**Herramienta:** ChatGPT de OpenAI.
+
+**Uso realizado:** apoyo para organizar ideas, revisar redacción, aclarar conceptos estadísticos y apoyar la revisión de código durante distintas etapas del reto.
+
+**Secciones donde se utilizó:** apoyo en la estructuración y revisión de explicaciones, interpretaciones y código del proyecto, así como en la organización inicial de esta reflexión.
+
+**Validación realizada por el estudiante:** el contenido, los resultados numéricos y las interpretaciones fueron revisados con base en los archivos, código y resultados obtenidos durante el reto. La versión final fue revisada por el estudiante, quien asume la responsabilidad del contenido entregado.
